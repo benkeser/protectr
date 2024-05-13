@@ -1,0 +1,169 @@
+---
+title: "Data Summary"
+author: "Seth Zissette"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+#' Code to create a data summary report
+#' 
+#' @param dat a \code{data.table}.
+#' @param grace_pd_wks a \code{numeric} indicating the length of the grace period
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+#' Load data
+# dat
+
+#' Set length of grace period
+grace_pd_wks <- 4
+
+# Data prep
+dat[, enrollment_year := format(as.Date(dat[,enroll_date]), "%Y")]
+dat[, wks_enrollment_to_art := as.numeric((art_start_date - enroll_date) / 7)]
+dat[, wks_enrollment_to_tpt := as.numeric((tpt_start_date - enroll_date) / 7)]
+dat[, wks_enrollment_to_tb := as.numeric((tb_diagnosis_date - enroll_date) / 7)]
+dat[, tpt_in_grace_pd_vs_else := factor(ifelse(!is.na(wks_enrollment_to_tpt) & wks_enrollment_to_tpt <= grace_pd_wks, "TPT in grace period",
+                                               "No TPT ever or TPT outside of grace period"),
+                                        levels = c("TPT in grace period", "No TPT ever or TPT outside of grace period"),
+                                        labels = c("TPT in\ngrace\nperiod\n", "No TPT\never\nor TPT\noutside\nof grace\nperiod\n"))]
+dat[, tpt_in_grace_pd_vs_out_vs_never := factor(ifelse(!is.na(wks_enrollment_to_tpt) & wks_enrollment_to_tpt <= grace_pd_wks, "TPT in grace period",
+                                                       ifelse(!is.na(wks_enrollment_to_tpt) & wks_enrollment_to_tpt > grace_pd_wks, "TPT outside of grace period",
+                                                              "No TPT")),
+                                                levels = c("TPT in grace period", "TPT outside of grace period", "No TPT"),
+                                                labels = c("TPT in\ngrace\nperiod\n", "TPT\noutside\nof grace\nperiod\n", "No TPT\n"))]
+
+year_min <- min(dat[,enrollment_year])
+year_max <- max(dat[,enrollment_year])
+```
+
+## Tabular Data Summary
+
+```{r tables}
+tbl_summary(dat,
+            missing = "no") %>%
+  add_n(statistic = "{n_miss} ({p_miss}%)", last=T) %>%
+  modify_header(label = "**Variable**",
+                n = "**Missing**")
+```
+
+\newpage
+
+## Time from Enrollment to ART Start by Year
+Years are omitted if they contained no records who initiated ART.
+
+```{r figures_art}
+hist(dat[,wks_enrollment_to_art],
+     main = "Enrollment to ART start - All Years", xlab = "Weeks",
+     col = rgb(red = 0, green = 0, blue = 1, alpha = 0.5),
+     border = rgb(red = 0, green = 0, blue = 1, alpha = 0.5))
+for(i in year_min:year_max){
+  if(all(is.na(dat[enrollment_year == i, wks_enrollment_to_art])) == FALSE){
+    hist(dat[enrollment_year == i, wks_enrollment_to_art],
+         main = paste0("Enrollment to ART start - ",i), xlab = "Weeks",
+         col = rgb(red = 0, green = 0, blue = 1, alpha = 0.5),
+         border = rgb(red = 0, green = 0, blue = 1, alpha = 0.5))
+  }
+}
+```
+
+\newpage
+
+## Time from Enrollment to TPT Start by Year
+Years are omitted if they contained no records who initiated TPT.
+
+```{r figures_tpt}
+hist(dat[,wks_enrollment_to_tpt],
+     main = "Enrollment to TPT start - All Years", xlab = "Weeks",
+     col = rgb(red = 0, green = 1, blue = 0, alpha = 0.5),
+     border = rgb(red = 0, green = 1, blue = 0, alpha = 0.5))
+for(i in year_min:year_max){
+  if(all(is.na(dat[enrollment_year == i, wks_enrollment_to_tpt])) == FALSE){
+    hist(dat[enrollment_year == i, wks_enrollment_to_tpt],
+         main = paste0("Enrollment to TPT start - ",i), xlab = "Weeks",
+         col = rgb(red = 0, green = 1, blue = 0, alpha = 0.5),
+         border = rgb(red = 0, green = 1, blue = 0, alpha = 0.5))
+  }
+}
+```
+
+\newpage
+
+## Comparison of Time from Enrollment to ART Start and TPT Start
+Years are omitted if they contained no records who initiated TPT.
+
+```{r figures_art_tpt}
+hist(dat[,wks_enrollment_to_tpt],
+     main = "Enrollment to ART and TPT start  - All Years", xlab = "Weeks",
+     col = rgb(red = 0, green = 1, blue = 0, alpha = 0.5),
+     border = rgb(red = 0, green = 1, blue = 0, alpha = 0.5))
+hist(dat[,wks_enrollment_to_art],
+     col = rgb(red = 0, green = 0, blue = 1, alpha = 0.5),
+     border = rgb(red = 0, green = 0, blue = 1, alpha = 0.5),
+     add = TRUE)
+legend("topright", legend = c("ART start", "TPT start"),
+       col = c(rgb(red = 0, green = 0, blue = 1, alpha = 0.5),
+               rgb(red = 0, green = 1, blue = 0, alpha = 0.5)),
+       pt.cex = 2, pch = 15)
+for(i in year_min:year_max){
+  if(all(is.na(dat[enrollment_year == i, wks_enrollment_to_tpt])) == FALSE){
+    hist(dat[enrollment_year == i, wks_enrollment_to_tpt],
+         main = paste0("Enrollment to ART and TPT start - ", i), xlab = "Weeks",
+         col = rgb(red = 0, green = 1, blue = 0, alpha = 0.5),
+         border = rgb(red = 0, green = 1, blue = 0, alpha = 0.5))
+    hist(dat[enrollment_year == i, wks_enrollment_to_art],
+         col = rgb(red = 0, green = 0, blue = 1, alpha = 0.5),
+         border = rgb(red = 0, green = 0, blue = 1, alpha = 0.5),
+         add = TRUE)
+    legend("topright", legend = c("ART start", "TPT start"),
+           col = c(rgb(red = 0, green = 0, blue = 1, alpha = 0.5),
+                   rgb(red = 0, green = 1, blue = 0, alpha = 0.5)),
+           pt.cex = 2, pch = 15)
+  }
+}
+```
+
+\newpage
+
+## Time from Enrollment to TB Diagnosis by Year
+Years are omitted if they contained no records who were diagnosed with TB.
+
+```{r figures_tb}
+hist(dat[,wks_enrollment_to_tb],
+     main = "Enrollment date to TB diagnosis - All Years", xlab = "Weeks",
+     col = rgb(red = 1, green = 0, blue = 0, alpha = 0.5),
+     border = rgb(red = 1, green = 0, blue = 0, alpha = 0.5))
+for(i in year_min:year_max){
+  if(all(is.na(dat[enrollment_year == i, wks_enrollment_to_tb])) == FALSE){
+    hist(dat[enrollment_year == i, wks_enrollment_to_tb],
+         main = paste0("Enrollment date to TB diagnosis - ",i), xlab = "Weeks",
+         col = rgb(red = 1, green = 0, blue = 0, alpha = 0.5),
+         border = rgb(red = 1, green = 0, blue = 0, alpha = 0.5))
+  }
+}
+```
+
+\newpage
+
+## Table 1 Summaries
+
+### Comparing those who initiate TPT in grace period vs. everyone else
+```{r tbl1_1}
+tbl_summary(dat,
+            by = tpt_in_grace_pd_vs_else,
+            missing = "always",
+            missing_text = "-Missing-") %>%
+  add_overall() %>%
+  modify_header(label = "**Variable***")
+```
+
+### Comparing those who initiate TPT in grace period vs. outside of grace period vs. never
+```{r tbl1_2}
+tbl_summary(dat,
+            by = tpt_in_grace_pd_vs_out_vs_never,
+            missing = "always",
+            missing_text = "-Missing-") %>%
+  add_overall() %>%
+  modify_header(label = "**Variable***")
+```
