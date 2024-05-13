@@ -13,8 +13,6 @@ and those that are constant across encounters.
 These variables should have the same value for each row of data for a client.
 
 - `id` = numeric variable identifying each client
-- `visit_date` = date variable identifying the date of each encounter included in the data
-	- the first `visit_date` should = `enroll_date`
 - `right_cens_date` = date variable identifying the date of right-censoring for each client
 	- no client should have right censoring occur prior to death date (?)
 	- no client should have right censoring occur prior to TB date (?)
@@ -27,7 +25,7 @@ These variables should have the same value for each row of data for a client.
 `tpt_start_date` = date of first TPT initiation after enrollment into care
 	- should always be > `enroll_date`
 	- should be `NA` if client not observed to start ART
-- tb_diagnosis_date = date of first TB diagnosis after enrollment into care
+- `tb_diagnosis_date` = date of first TB diagnosis after enrollment into care
 	- should always be > `enroll_date`
 	- should be `NA` if client not observed to have TB diagnosis after enrollment into care
 	- ultimately, we exclude individuals with TB within 30 days of enrollment into care
@@ -37,6 +35,8 @@ These variables should have the same value for each row of data for a client.
 
 ## Encounter-level variables
 
+- `visit_date` = date variable identifying the date of each encounter included in the data
+	- the first `visit_date` should = `enroll_date`
 - `art_adherence` = a numeric variable indicating level of ART adherence
 	- may need to assign arbitrary numeric values to categorical labels
 	- can be missing for some encounters
