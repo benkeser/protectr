@@ -30,6 +30,10 @@ These variables should have the same value for each row of data for a client.
 	- should be `NA` if client not observed to have TB diagnosis after enrollment into care
 	- ultimately, we exclude individuals with TB within 30 days of enrollment into care
 		- this should happen upstream for efficiency of sensitivity analyses
+- `cd4_count_date` = date on which initial CD4 count was measured
+	- can be `NA` if no CD4 count was taken
+- `cd4_count` = value for initial CD4 count 
+	- can be `NA` if no CD4 count was taken
 - other baseline variables (e.g., sex, age) 
 	- should be in form appropriate for modeling using glm
 
