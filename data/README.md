@@ -22,7 +22,7 @@ These variables should have the same value for each row of data for a client.
 - `art_start_date` = date of ART initiation
 	- should it always be > `enroll_date`?
 	- should be `NA` if client not observed to start ART
-`tpt_start_date` = date of first TPT initiation after enrollment into care
+- `tpt_start_date` = date of first TPT initiation after enrollment into care
 	- should always be > `enroll_date`
 	- should be `NA` if client not observed to start ART
 - `tb_diagnosis_date` = date of first TB diagnosis after enrollment into care
