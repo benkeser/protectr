@@ -7,6 +7,8 @@
 #' @param k a \code{numeric} indicating the number of past encounters
 #'   to summarize
 #' @param verbose not currently in use
+#' @param admin_cens_wks a \code{numeric} indicating the number of 
+#'   weeks prior to administrative censoring
 #' @param ... not currently in use
 #' @return a \code{data.table}
 
@@ -22,6 +24,7 @@ create_weekly_record_data <- function(
   assertthat::assert_that("id" %in% colnames(dat))
   assertthat::assert_that("visit_date" %in% colnames(dat))
   assertthat::assert_that("right_cens_date" %in% colnames(dat))
+
   assertthat::assert_that("enroll_date" %in% colnames(dat))
   assertthat::assert_that("art_start_date" %in% colnames(dat))
   assertthat::assert_that("tpt_start_date" %in% colnames(dat))
@@ -79,6 +82,9 @@ create_weekly_record_data <- function(
       weekly_records[, tpt_init := FALSE]
     }
 
+    cd4_count_this_id <- unique(dat_id$cd4_count)
+    cd4_count_date_this_id <- unique(dat_id$cd4_count_date)
+
     # find k closest clinic visits to week j 
     # only include visits in week j if tpt_init_date not in 
     # interval(week_start, week_end)
@@ -106,6 +112,12 @@ create_weekly_record_data <- function(
         n_visits <- 0
       }
       
+      cd4_count_variables <- summarize_cd4_count(
+        cd4_count_date = cd4_count_this_id, 
+        cd4_count = cd4_count_this_id,
+        visits_before_date = visits_before_date                    
+      )
+
       # variables indicating whether a visit is present
       have_visit_variables <- "have_visit_k"
       if(k > 1){
@@ -157,7 +169,7 @@ create_weekly_record_data <- function(
     right_cens_date_this_id <- dat_id[1, right_cens_date]
     right_cens_wk_this_id <- get_week_of_event(right_cens_date_this_id, enroll_date_this_id)
     weekly_records[, right_cens_wk := right_cens_wk_this_id]
-    
+
     admin_cens_date_this_id <- dat_id[1, admin_cens_date]
     admin_cens_wk_this_id <- get_week_of_event(admin_cens_date_this_id, enroll_date_this_id)
     weekly_records[, admin_cens_wk := admin_cens_wk_this_id]
@@ -177,8 +189,6 @@ create_weekly_record_data <- function(
 
   return(weekly_data)
 }
-
-
 
 #' @param k_most_recent_visits A \code{data.table} of the most recent k encounters
 #' with relevant ART adherence included. If \code{k_most_recent_visits} is \code{NULL}
@@ -239,6 +249,24 @@ summarize_art_adherence <- function(
   return(out)
 }
 
+summarize_cd4_count <- function(
+  cd4_count_date,
+  cd4_count,
+  visits_before_date                                
+){
+  out <- list(
+    have_cd4 = 0,
+    cd4_count = 0,
+    days_since_cd4_count = 0                  
+  )
+  if((cd4_count_date < visits_before_date) & 
+     !(is.na(cd4_count))){
+    out$have_cd4 <- 1
+    out$cd4_cound <- cd4_count
+    out$days_since_cd4_count <- round(visits_before_date - cd4_count_date)
+  }
+  return(out)
+}
 
 summarize_visit_times <- function(
   all_prior_visit_dates,
