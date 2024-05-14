@@ -23,7 +23,8 @@
 #' 
 #' @return a named \code{list} with elements: \code{weekly_records_data} = same
 #'   as the input data but with estimated probabilities and weights added; 
-#'   \code{models} = a \code{list} of model fits if \code{return_models}.
+#'   \code{models} = a \code{list} of model fits if \code{return_models};
+#'   \code{grace_pd_wks} = passed through from the input
 
 fit_propensity_models <- function(
 	weekly_records_data,
@@ -218,6 +219,7 @@ fit_propensity_models <- function(
 		num_model = NULL,
 		cens_model = NULL
 	)
+	out$grace_pd_wks <- grace_pd_wks
 
 	if(return_models){
 		out$models$denom_model <- strip_glm(denom_model)

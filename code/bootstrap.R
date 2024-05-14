@@ -61,7 +61,7 @@ do_one_bootstrap <- function(
   msm_formulas_tb = "splines::ns(wk, 3) + z",
   msm_formulas_death = "splines::ns(wk, 3) + z",
   msm_formulas_death_for_tb = msm_formulas_death,
-  admin_cens_wks = 52 * 2
+  admin_cens_wks = 52 * 2,
   ...                   
 ){
 
@@ -77,7 +77,7 @@ do_one_bootstrap <- function(
 	setnames(weekly_records_data_bootstrap, old = "id", new = "orig_id")
 	setnames(weekly_records_data_bootstrap, old = "new_id", new = "id")
 
-	propensity_model_output <- fit_propensity_models(
+	propensity_output <- fit_propensity_models(
 		weekly_records_data,
 		grace_pd_wks = grace_pd_wks,
 		denom_model_formula = denom_model_formula,
@@ -87,13 +87,11 @@ do_one_bootstrap <- function(
 	)
 	
 	cf_init_dist <- compute_cf_init_dist(
-		weekly_records_data = propensity_model_output$weekly_records_data,
-		grace_pd_wks = grace_pd_wks
+		propensity_output = propensity_output
 	)
 
 	cloned_data_sets <- create_cloned_data_set(
-		weekly_records_data = propensity_model_output$weekly_records_data,
-		grace_pd_wks = grace_pd_wks
+		propensity_output = propensity_output
 	)
 
 	msm_fits_tb <- sapply(msm_formulas_tb, 
@@ -142,4 +140,135 @@ do_one_bootstrap <- function(
 	)
 
 	return(out)
+}
+
+
+run_bootstrap <- function(
+  nboot = 1e3,
+  weekly_records_data,
+  grace_pd_wks,
+  denom_model_formula,
+  num_model_formula,
+  right_cens_model_formula,   
+  msm_formulas_tb = "splines::ns(wk, 3) + z",
+  msm_formulas_death = "splines::ns(wk, 3) + z",
+  msm_formulas_death_for_tb = msm_formulas_death,
+  admin_cens_wks = 52 * 2
+){
+	bootstrap_results <- future::replicate(
+		nboot, do_one_bootstrap(
+			weekly_records_data = weekly_records_data,
+  		grace_pd_wks = grace_pd_wks,
+  		denom_model_formula = denom_model_formula,
+  		num_model_formula = num_model_formula,
+  		right_cens_model_formula = right_cens_model_formula,   
+  		msm_formulas_tb = msm_formulas_tb,
+  		msm_formulas_death = msm_formulas_death,
+  		msm_formulas_death_for_tb = msm_formulas_death_for_tb,
+  		admin_cens_wks = admin_cens_wks
+		) 	                                  
+	)
+	return(bootstrap_results)
+}
+
+get_bootstrap_ci <- function(
+	bootstrap_results                             
+){
+	# confidence intervals for cf_init_dist
+	cf_init_dist_ci <- get_fn_by_wk_boot_result(
+		bootstrap_results, "cf_init_dist"
+	)
+	
+	# bootstrap results for msm_fits_tb
+	msm_fits_tb_ci <- get_msm_boot_result(
+		bootstrap_results, "msm_fits_tb"	                                      
+	)
+
+	# bootstrap results for msm_fits_death
+	msm_fits_death_ci <- get_msm_boot_result(
+		bootstrap_results, "msm_fits_death"	                                      
+	)
+
+	# bootstrap results for cuminc
+	msm_formulas <- names(bootstrap_results[[1]]$cuminc)
+	cuminc_ci <- sapply(
+	  get_fn_by_wk_boot_result,
+		bootstrap_results = bootstrap_results, 
+		fn_by_wk_name = "cuminc",
+		simplify = FALSE,
+		USE.NAMES = TRUE
+	)
+
+	out <- list(
+		cf_init_dist_ci = cf_init_dist_ci,
+		msm_fits_tb_ci = msm_fits_tb_ci,
+		msm_fits_death_ci = msm_fits_death_ci,
+		cuminc_ci = cuminc_ci
+	)
+	
+	return(out)
+}
+
+get_fn_by_wk_boot_result <- function(
+	bootstrap_results,
+	fn_by_wk_name = "cf_init_dist",
+	subset_name = NULL
+){
+	all_fn_by_wk_df <- lapply(
+		bootstrap_results, "[[", fn_by_wk_name
+	)
+
+	if(!is.null(subset_name)){
+		all_fn_by_wk_df <- lapply(
+			all_fn_by_wk_df, "[[", subset_name		                          
+		)
+	}
+
+	all_fn_by_wk_df_no_wk <- lapply(
+		all_fn_by_wk_df, function(x){
+			x[,-1] # remove week column
+		}	                           
+	)
+	colnames_fn_by_wk <- colnames(all_fn_by_wk_df_no_wk[[1]])
+	fn_by_wk_by_col <- sapply(colnames_fn_by_wk, function(x){
+		lapply(all_fn_by_wk_df_no_wk, "[[", x)
+	}, simplify = FALSE, USE.NAMES = TRUE)
+	fn_by_wk_by_col_all_boot <- lapply(fn_by_wk_by_col, Reduce, f = cbind)
+	fn_by_wk_ci_by_col <- lapply(fn_by_wk_by_col_all_boot, function(x){
+		t(apply(x, 1, quantile, p = c(0.025, 0.975)))
+	})
+	for(x in names(fn_by_wk_ci_by_col)){
+		colnames(fn_by_wk_ci_by_col[[x]]) <- paste0(x, c("_cil", "_ciu"))
+	}
+	fn_by_wk_ci_matrix <- Reduce(cbind, fn_by_wk_ci_by_col)
+	fn_by_wk_ci <- data.frame(
+		wk = all_fn_by_wk_df[[1]]$wk,
+		fn_by_wk_ci_matrix
+	)
+	return(fn_by_wk_ci)
+}
+
+get_msm_boot_result <- function(
+	bootstrap_results,
+	msm_fits_name = "msm_fits_tb"
+){
+	all_z_coef <- lapply(
+		bootstrap_results, function(x){
+			sapply(x[[msm_fits_name]], function(y){
+				y$msm_coef['z']
+			}, simplify = TRUE, USE.NAMES = TRUE)
+		}
+	)
+	all_z_coef_matrix <- Reduce(rbind, all_z_coef)
+	all_z_coef_ci <- t(apply(all_z_coef_matrix, 2, quantile, p = c(0.025, 0.975)))
+	all_z_coef_sd <- t(apply(all_z_coef_matrix, 2, sd))
+	msm_fits_ci <- data.frame(
+		se = c(all_z_coef_sd),
+		ci_l = all_z_coef_ci[,1],
+		ci_u = all_z_coef_ci[,2]
+	)
+	row.names(msm_fits_ci) <- NULL
+	msm_fits_ci_split <- split(msm_fits_ci, seq_len(dim(msm_fits_ci)[1]))
+	names(msm_fits_ci_split) <- names(bootstrap_results[[1]][[msm_fits_name]])
+	return(msm_fits_ci_split)
 }

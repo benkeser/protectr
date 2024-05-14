@@ -1,0 +1,368 @@
+---
+title: Example code for primary PROTECT analysis
+output: html_document
+---
+
+# Load cleaned raw data
+
+First, load the cleaned raw data into R. 
+
+For the purposes of the example code below, suppose the data 
+set that is loaded is called `dat`
+
+# Establish project root directory
+
+To avoid dealing with having to re-write absolute filepaths, 
+we can make use of the `here` package. The following code 
+establishes the root directory of the project. Subsequent
+filepaths can then be written relative to this root directory.
+
+```{r, eval = FALSE}
+# set working directory to protectr/ folder using setwd()
+here::i_am("reports/example_analysis.Rmd")
+```
+
+# Creating weekly records data
+
+The first step in the analysis is to map the original data set
+to a long format with one row for each week of followup.
+
+This is done using the `create_weekly_record_data` function 
+contained in `code/create_weekly_records.R`
+
+```{r, eval = FALSE}
+source(here::here("code/create_weekly_records.R"))
+```
+
+The raw data are then passed to the function with the 
+following options:
+
+- `dat` = the name of the raw data set
+- `baseline_covariates` = a `vector` of `string`'s corresponding to column names of all static variables that should be included in the analysis (e.g., age, sex, ...)
+- `k` = during the creation of the weekly records, the code looks
+for the `k` most recent encounters in a particular week and 
+summarizes ART adherence and TB symptoms at those visits. The default value is `3`. Reducing this number may speed up the 
+code slightly.
+- `admin_cens_wks` = number of weeks after enrollment into care
+before administrative censoring records (i.e., ending followup 
+for all clients). This should be set to the maximum value that 
+we may wish to use, because we can always re-define and further 
+subset later; however, if we wish to *increase* the value, we would need to re-run the function, which is time consuming
+
+This function call is quite time consuming. However, it can be 
+parallelized to speed up computations using the `future` package.
+
+```{r, eval = FALSE}
+# determine number of cores on machine
+ncores <- parallel::detectCores()
+
+# use all but one core (modify as needed)
+future::plan('multisession', workers = ncores - 1)
+
+# if no parallelization is desired, then run
+# future::plan('sequential')
+```
+
+Once appropriate inputs have been determined, we are able to 
+run the function.
+
+```{r, eval = FALSE}
+weekly_records_data <- create_weekly_record_data(
+  dat = dat,
+  baseline_covariates = ...,
+  k = ...,
+  admin_cens_wks = ...
+)
+```
+
+__After this function completes, be sure to save the data!__
+
+The data can *either* be saved in `csv` *or* `.rds` format, 
+as shown below.
+
+```{r, eval = FALSE}
+# code to save as .csv
+fwrite(
+	weekly_records_data, 
+	here::here("data/weekly_records_data.csv")
+)
+
+# code to save as .RData
+saveRDS(
+	weekly_records_data,
+	here::here("data/weekly_records_data.rds")
+)
+```
+
+In future sessions, you can load the data back into a new R 
+session as follows.
+
+```{r, eval = FALSE}
+# reestablish project root directory if needed
+# set working directory to protectr/ folder using setwd()
+here::i_am("reports/example_analysis.Rmd")
+
+# code to read data if saved as csv
+weekly_records_data <- fread(
+	here::here("data/weekly_records_data.csv")
+)
+
+# code to read data if saved as RData
+weekly_records_data <- readRDS(
+	here::here("data/weekly_records_data.rds")
+)
+```
+
+
+# Adjust weekly data as needed
+
+There are two adjustments that we may consider at this point:
+
+- excluding participants with TB diagnosis date within 
+some specified period after enrollment into care;
+- subsetting data based on year of enrollment into care;
+- shortening the administrative censoring follow-up period.
+
+To exclude participants with early TB diagnosis, we can do the following:
+
+```{r, eval = FALSE}
+# e.g., exclude cases within 30 days of enrollment into care
+exclusion_period <- 30
+weekly_records_data_exclude <- weekly_records_data[
+ is.na(tb_diagnosis_date) | (tb_diagnosis_date - enroll_date > 30)
+]
+```
+
+To subset data based on year of enrollment into care, we can do the follow:
+
+```{r, eval = FALSE}
+exclusion_date <- as.Date("2016/01/01")
+weekly_records_data_exclude <- weekly_records_data[
+	enroll_date > exclusion_date
+]
+```
+
+To exclude participants after an earlier administrative censoring 
+date, we can do the following.
+
+```{r, eval = FALSE}
+# should be <= admin_cens_wk used in call to create_weekly_records
+new_admin_cens_wk <- 52
+weekly_records_data_exclude <- weekly_records_data[
+	wk < new_admin_cens_wk
+]
+```
+
+
+# Fitting propensity scores
+
+Once the weekly data have been created (and appropriately subset
+as desired), the next step in the analysis is to estimate the 
+probability of TPT initiation and the probability of right
+censoring. This is done via the `fit_propensity_models` function
+included in `code/fit_propensity_models.R` script.
+
+```{r, eval = FALSE}
+source(here::here("code/fit_propensity_models.R"))
+```
+
+There are several relevant options to this function:
+
+- `weekly_records_data` = the (possibly subsetted) weekly 
+records data created above
+- `grace_pd_wks` = a `numeric` giving the length of the 
+grace period in weeks
+- `denom_model_formula` = a `string` giving the right-hand side
+of the model formula for modeling TPT initiation
+- `num_model_formula` = a `string` giving the right-hand side
+of the model formula for modeling TPT initiation amongst those
+observed to initiate TPT during the specified grace period
+- `right_cens_model_formula` = a `string` giving the right-hand 
+side of the model formula for modeling right-censoring probability
+- `return_models` = a `boolean` indicating whether the fitted 
+`glm` objects should be returned as part of the output (default 
+value is `TRUE`)
+
+```{r, eval = FALSE}
+propensity_output <- fit_propensity_models(
+	weekly_records_data = weekly_records_data_exclude,
+	grace_pd_wks = ...,
+	denom_model_formula = ...,
+	num_model_formula = ...,
+	right_cens_model_formula = ...
+)
+```
+
+The output is a `list` that contains two objects:
+- `weekly_records_data` = a `data.table` that includes new columns
+of estimated TPT initiation- and right censoring probabilities, 
+along with columns of probability weights.
+- `models` = a `list` that includes named elements:
+	- `denom_model` = a `glm` used to model the probability of TPT initiation over the duration of follow-up
+	- `num_model` = a `glm` used to model the probability of TPT initiation over the grace period (amongst those clients who initiate in the grace period)
+	- `cens_model` = a `glm` used to model the probability of right censoring
+
+
+# Visualizing the distribution of TPT initiation in grace period
+
+The primary PROTECT analysis looks to make inference on the 
+effectiveness of TPT in the counterfactual scenario that *all 
+clients* initiated TPT within the grace period according to the 
+same distribution as that of clients *who were observed* to 
+initiate TPT within the grace period.
+
+Therefore, it may be beneficial to describe this distribution.
+
+A helper function `compute_cf_init_dist` contained in the 
+`code/compute_cf_init_dist.R` script can be used to this end.
+
+```{r, eval = FALSE}
+source(here::here("code/compute_cf_init_dist.R"))
+```
+
+The only input options to this function is the output from the `fit_propensity_models`.
+
+```{r, eval = FALSE}
+cf_init_dist <- compute_cf_init_dist(propensity_output)
+```
+
+The output is a `data.frame` with columns:
+
+- `wk` = week after enrollment into care
+- `haz` = probability of initiating TPT in `wk` given no prior TPT initiation
+- `pmf` = probability of initiating TPT in `wk` 
+- `cdf` = cumulative probability of having initiated TPT during or prior to `wk`
+
+This output can be plotted, e.g.:
+
+```{r, eval = FALSE}
+plot(
+  pmf ~ wk, data = cf_init_dist,
+  xlab = "Week", ylab = "Prob. TPT initiation"
+)
+```
+
+## Create cloned data sets
+
+Next, we generate cloned data sets that are used to fit the marginal structural models.
+
+The helper function to do so is included in `code/create_cloned_data_set.R`
+
+```{r, eval = FALSE}
+source(here::here("code/create_cloned_data_set.R"))
+```
+
+The function takes only the output from the propensity models above as input.
+
+```{r, eval = FALSE}
+cloned_data_sets <- create_cloned_data_set(
+	propensity_output = propensity_output
+)
+```
+
+The output is a `list` of `data.tables` named:
+
+- `tb` = the data set used to analyze the TB endpoint
+- `death` = the data set used to analyze the death endpoint
+- `death_for_tb` = the data set used to analyze the death endpoint, but treating TB as a competing risk
+
+The latter data set is needed to generate cumulative incidence plots for `tb` where `death` is treated as a competing risk.
+
+## Fit marginal structural models
+
+Next, we make several calls to the `fit_msm` function to generate estimates of the parameter of the MSM.
+
+The input to this function includes:
+
+- `cloned_data_set` = on of the elements of the output of `create_cloned_data_set`
+- `msm_formula` = the right hand side of the formula for the MSM
+	- the SAP calls for fitting two models: one with `msm_formula = "splines::ns(wk, 3) + z"` and another that includes an interaction between the two (for plotting/descriptive purposes only)
+- `return_msm_model` = `boolean` indicating whether the fitted model should be returned
+- `gee` = `boolean` indicating whether to use `geepack` (instead of `glm`) to fit MSM
+- `return_msm_vcov` = `boolean` indicating whether to return the variance/covariance matrix from the fit
+
+```{r, eval = FALSE}
+msm_fit_tb <- fit_msm(
+  cloned_data_set = cloned_data_sets$tb, 
+  msm_formula = ...,
+	return_msm_model = TRUE,
+	gee = FALSE,
+	return_msm_vcov = FALSE
+)
+```
+
+The code should be repeated for the other two outcomes in `cloned_data_sets` as well.
+
+```{r, eval = FALSE}
+msm_fit_death <- fit_msm(
+  cloned_data_set = cloned_data_sets$death, 
+  msm_formula = ...,
+	return_msm_model = TRUE,
+	gee = FALSE,
+	return_msm_vcov = FALSE
+)
+
+msm_fit_death_for_tb <- fit_msm(
+  cloned_data_set = cloned_data_sets$death_for_tb, 
+  msm_formula = ...,
+	return_msm_model = TRUE,
+	gee = FALSE,
+	return_msm_vcov = FALSE
+)
+```
+
+The output of the call to `fit_msm` is a `list` with elements: 
+
+- `msm_coef` = coefficients from the marginal structural model
+- `msm_vcov` = covariance matrix from the marginal structural model
+- `msm_model` = the fitted model itself
+
+
+## Visualizing output of MSMs
+
+The outputs of the MSMs can be visualized by first calling `compute_cuminc` function from `code/compute_cuminc.R`
+
+```{r, eval = FALSE}
+source(here::here("code/compute_cuminc.R"))
+```
+
+The three MSMs are passed to `compute_cuminc` along with the maximum week for which plotting is desired.
+
+```{r, eval = FALSE}
+cuminc <- compute_cuminc(
+		msm_fit_tb = msm_fit_tb,
+		msm_fit_death = msm_fit_death,
+		msm_fit_death_for_tb = msm_fit_death_for_tb,
+		max_wk = 52 * 2
+	)
+```
+
+The output is a `data.frame` with columns:
+
+- `wk` = week of follow-up
+- `haz_tb_z1` = estimated counterfactual hazard for TB under TPT condition in each `wk`
+- `haz_tb_z0` = estimated counterfactual hazard for TB under control condition in each `wk`
+- `haz_death_z1` = estimated counterfactual hazard for death under TPT condition in each `wk`
+- `haz_death_z0` = estimated counterfactual hazard for death under control condition in each `wk`
+- `cif_tb_z1` = cumulative incidence for TB under the TPT condition in each `wk`
+- `cif_tb_z0` = cumulative incidence for TB under the control condition in each `wk`
+- `cif_death_z1` = cumulative incidence for death under the TPT condition in each `wk`
+- `cif_death_z0` = cumulative incidence for death under the control condition in each `wk`
+
+This `data.frame` can be used for plotting, e.g.:
+
+```{r, eval = FALSE}
+plot(
+	x = wk, y = cif_tb_z1, data = cuminc,
+	type = "l", lwd = 2, col = 1,
+	ylim = c(0, 0.4),
+	xlab = "Week after enrollment into care",
+	ylab = "Cumulative incidence"
+)
+lines(
+	x = wk, y = cif_tb_z0, data = cuminc,
+	lwd = 2, col = 2,
+)
+```
+
+## Bootstrap 
