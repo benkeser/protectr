@@ -190,9 +190,10 @@ get_bootstrap_ci <- function(
 	)
 
 	# bootstrap results for cuminc
-	msm_formulas <- names(bootstrap_results[[1]]$cuminc)
+	n_models <- length(bootstrap_results["cuminc", ])
 	cuminc_ci <- sapply(
-	  get_fn_by_wk_boot_result,
+		seq_len(n_models),
+	  FUN = get_fn_by_wk_boot_result,
 		bootstrap_results = bootstrap_results, 
 		fn_by_wk_name = "cuminc",
 		simplify = FALSE,
@@ -212,15 +213,13 @@ get_bootstrap_ci <- function(
 get_fn_by_wk_boot_result <- function(
 	bootstrap_results,
 	fn_by_wk_name = "cf_init_dist",
-	subset_name = NULL
+	subset_idx = NULL
 ){
-	all_fn_by_wk_df <- lapply(
-		bootstrap_results, "[[", fn_by_wk_name
-	)
+	all_fn_by_wk_df <- bootstrap_results[fn_by_wk_name, ]
 
 	if(!is.null(subset_name)){
 		all_fn_by_wk_df <- lapply(
-			all_fn_by_wk_df, "[[", subset_name		                          
+			all_fn_by_wk_df, "[[", subset_idx		                          
 		)
 	}
 
@@ -252,13 +251,14 @@ get_msm_boot_result <- function(
 	bootstrap_results,
 	msm_fits_name = "msm_fits_tb"
 ){
-	all_z_coef <- lapply(
-		bootstrap_results, function(x){
-			sapply(x[[msm_fits_name]], function(y){
-				y$msm_coef['z']
-			}, simplify = TRUE, USE.NAMES = TRUE)
-		}
+	all_z_coef <- sapply(
+		bootstrap_results[msm_fits_name,], 
+		function(y){
+			y$msm_coef['z']
+		}, 
+		simplify = TRUE, USE.NAMES = TRUE
 	)
+	
 	all_z_coef_matrix <- Reduce(rbind, all_z_coef)
 	all_z_coef_ci <- t(apply(all_z_coef_matrix, 2, quantile, p = c(0.025, 0.975)))
 	all_z_coef_sd <- t(apply(all_z_coef_matrix, 2, sd))

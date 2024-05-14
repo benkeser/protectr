@@ -366,3 +366,71 @@ lines(
 ```
 
 ## Bootstrap 
+
+To generate confidence intervals and inference for all of the relevant estimands of interest, we utilize the nonparametric bootstrap.
+
+This procedure involves re-sampling with replacement from `weekly_records_data` and re-running the entire analysis.
+
+Various helper functions are included in `code/bootstrap.R` to aid in this analysis.
+
+```{r, eval = FALSE}
+source(here::here("code/bootstrap.R"))
+```
+
+The first function of note is `run_bootstrap`. This function has the following options:
+
+- `nboot` = number of bootstrap resamples to perform (default value is 1000)
+
+There are several additional options listed below. These should all be __set to the same value as was used in calls to the functions above__. This will ensure that the same analysis is performed on the re-sampled data as was performed on the original data above. The relevant options are: 
+
+- `weekly_records_data`, `grace_pd_wks`, `denom_model_formula`, `num_model_formula`, `right_cens_model_formula`, `admin_cens_wks`
+
+To increase the efficiency of the code, it is possible to obtain bootstrap results for multiple MSM formulas at once. These formulas can be inputted as vectors to the options:
+- `msm_formulas_tb`, `msm_formulas_death`, and `msm_formulas_death_for_tb`
+
+As above, the bootstrap process is parallelized using `future`, so be sure to specify a `future::plan` as necessary.
+
+```{r, eval = FALSE}
+future::plan('multisession', workers = ncores - 1)
+
+bootstrap_results <- run_bootstrap(
+	nboot = 1e3,
+	# ensure all these inputs are same as above!
+  weekly_records_data = ...,
+  grace_pd_wks = ...,
+  denom_model_formula = ...,
+  num_model_formula = ...,
+  right_cens_model_formula = ...,  
+  admin_cens_wks = ..., 
+  # input all msm formulas that are of interest
+  msm_formulas_tb = ...,
+  msm_formulas_death = ...,
+  msm_formulas_death_for_tb = ...,
+)
+```
+
+After the bootstrap process has completed, you should save the results to ensure results are not lost. E.g.,
+
+```{r, eval = FALSE}
+saveRDS(
+	bootstrap_results,
+	here::here("data/bootstrap_results.rds")
+)
+```
+
+Finally, confidence intervals and other relevant information for inference can be obtained using the `get_bootstrap_ci` function.
+
+```{r, eval = FALSE}
+bootstrap_ci <- get_bootstrap_ci(bootstrap_results)
+```
+
+The output of this function is a named `list` with elements:
+
+- `cf_init_dist_ci` = a `data.frame` with columns `wk`, and confidence intervals for each of the relevant parameters used to describe the counterfactual initiation distribution. These columns are named `X_cil`, and `X_ciu`, where `X` = `haz`, `pmf`, and `cdf`
+- `msm_fits_tb_ci` = a `list` with a named element for each object of `msm_formulas_tb` that was inputted to `run_bootstrap`. Each element of this list contains a `data.frame` with columns `se`, `ci_l`, and `ci_u` corresponding to the bootstrap-estimated standard error, and lower/upper confidence intervals for the coefficient for `z` in the marginal structural model
+- `msm_fits_death_ci` = same as above, but for death outcome
+- `cuminc_ci` = a `list` with a named element for each element of `msm_formulas_tb` that was inputted to `run_bootstrap`. Each element of this list contains a `data.frame` with columns `wk`, and confidence intervals for each of the relevant parameters used to describe counterfactual incidence of TB and mortality over time. The names of these columns should be self-explanatory.
+
+
+
+
