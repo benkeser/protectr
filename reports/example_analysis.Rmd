@@ -1,6 +1,6 @@
 ---
 title: Example code for primary PROTECT analysis
-output: html_document
+output: github_document
 ---
 
 # Load cleaned raw data
@@ -12,10 +12,7 @@ set that is loaded is called `dat`
 
 # Establish project root directory
 
-To avoid dealing with having to re-write absolute filepaths, 
-we can make use of the `here` package. The following code 
-establishes the root directory of the project. Subsequent
-filepaths can then be written relative to this root directory.
+To avoid dealing with having to re-write absolute filepaths, we can make use of the `here` package. The following code establishes the root directory of the project. Subsequent filepaths can then be written relative to this root directory.
 
 ```{r, eval = FALSE}
 # set working directory to protectr/ folder using setwd()
@@ -24,11 +21,9 @@ here::i_am("reports/example_analysis.Rmd")
 
 # Creating weekly records data
 
-The first step in the analysis is to map the original data set
-to a long format with one row for each week of followup.
+The first step in the analysis is to map the original data set to a long format with one row for each week of followup.
 
-This is done using the `create_weekly_record_data` function 
-contained in `code/create_weekly_records.R`
+This is done using the `create_weekly_record_data` function contained in `code/create_weekly_records.R`
 
 ```{r, eval = FALSE}
 source(here::here("code/create_weekly_records.R"))
@@ -39,18 +34,10 @@ following options:
 
 - `dat` = the name of the raw data set
 - `baseline_covariates` = a `vector` of `string`'s corresponding to column names of all static variables that should be included in the analysis (e.g., age, sex, ...)
-- `k` = during the creation of the weekly records, the code looks
-for the `k` most recent encounters in a particular week and 
-summarizes ART adherence and TB symptoms at those visits. The default value is `3`. Reducing this number may speed up the 
-code slightly.
-- `admin_cens_wks` = number of weeks after enrollment into care
-before administrative censoring records (i.e., ending followup 
-for all clients). This should be set to the maximum value that 
-we may wish to use, because we can always re-define and further 
-subset later; however, if we wish to *increase* the value, we would need to re-run the function, which is time consuming
+- `k` = during the creation of the weekly records, the code looks for the `k` most recent encounters in a particular week and summarizes ART adherence and TB symptoms at those visits. The default value is `3`. Reducing this number may speed up the code slightly.
+- `admin_cens_wks` = number of weeks after enrollment into care before administrative censoring records (i.e., ending followup for all clients). This should be set to the maximum value that we may wish to use, because we can always re-define and further subset later; however, if we wish to *increase* the value, we would need to re-run the function, which is time consuming
 
-This function call is quite time consuming. However, it can be 
-parallelized to speed up computations using the `future` package.
+This function call is quite time consuming. However, it can be parallelized to speed up computations using the `future` package.
 
 ```{r, eval = FALSE}
 # determine number of cores on machine
@@ -63,8 +50,7 @@ future::plan('multisession', workers = ncores - 1)
 # future::plan('sequential')
 ```
 
-Once appropriate inputs have been determined, we are able to 
-run the function.
+Once appropriate inputs have been determined, we are able to run the function.
 
 ```{r, eval = FALSE}
 weekly_records_data <- create_weekly_record_data(
@@ -77,8 +63,7 @@ weekly_records_data <- create_weekly_record_data(
 
 __After this function completes, be sure to save the data!__
 
-The data can *either* be saved in `csv` *or* `.rds` format, 
-as shown below.
+The data can *either* be saved in `csv` *or* `.rds` format, as shown below.
 
 ```{r, eval = FALSE}
 # code to save as .csv
@@ -94,8 +79,7 @@ saveRDS(
 )
 ```
 
-In future sessions, you can load the data back into a new R 
-session as follows.
+In future sessions, you can load the data back into a new R session as follows.
 
 ```{r, eval = FALSE}
 # reestablish project root directory if needed
@@ -142,8 +126,7 @@ weekly_records_data_exclude <- weekly_records_data[
 ]
 ```
 
-To exclude participants after an earlier administrative censoring 
-date, we can do the following.
+To exclude participants after an earlier administrative censoring date, we can do the following.
 
 ```{r, eval = FALSE}
 # should be <= admin_cens_wk used in call to create_weekly_records
@@ -156,11 +139,7 @@ weekly_records_data_exclude <- weekly_records_data[
 
 # Fitting propensity scores
 
-Once the weekly data have been created (and appropriately subset
-as desired), the next step in the analysis is to estimate the 
-probability of TPT initiation and the probability of right
-censoring. This is done via the `fit_propensity_models` function
-included in `code/fit_propensity_models.R` script.
+Once the weekly data have been created (and appropriately subset as desired), the next step in the analysis is to estimate the probability of TPT initiation and the probability of right censoring. This is done via the `fit_propensity_models` function included in `code/fit_propensity_models.R` script.
 
 ```{r, eval = FALSE}
 source(here::here("code/fit_propensity_models.R"))
@@ -168,20 +147,12 @@ source(here::here("code/fit_propensity_models.R"))
 
 There are several relevant options to this function:
 
-- `weekly_records_data` = the (possibly subsetted) weekly 
-records data created above
-- `grace_pd_wks` = a `numeric` giving the length of the 
-grace period in weeks
-- `denom_model_formula` = a `string` giving the right-hand side
-of the model formula for modeling TPT initiation
-- `num_model_formula` = a `string` giving the right-hand side
-of the model formula for modeling TPT initiation amongst those
-observed to initiate TPT during the specified grace period
-- `right_cens_model_formula` = a `string` giving the right-hand 
-side of the model formula for modeling right-censoring probability
-- `return_models` = a `boolean` indicating whether the fitted 
-`glm` objects should be returned as part of the output (default 
-value is `TRUE`)
+- `weekly_records_data` = the (possibly subsetted) weekly records data created above
+- `grace_pd_wks` = a `numeric` giving the length of the grace period in weeks
+- `denom_model_formula` = a `string` giving the right-hand side of the model formula for modeling TPT initiation
+- `num_model_formula` = a `string` giving the right-hand side of the model formula for modeling TPT initiation amongst those observed to initiate TPT during the specified grace period
+- `right_cens_model_formula` = a `string` giving the right-hand side of the model formula for modeling right-censoring probability
+- `return_models` = a `boolean` indicating whether the fitted `glm` objects should be returned as part of the output (default value is `TRUE`)
 
 ```{r, eval = FALSE}
 propensity_output <- fit_propensity_models(
@@ -194,9 +165,7 @@ propensity_output <- fit_propensity_models(
 ```
 
 The output is a `list` that contains two objects:
-- `weekly_records_data` = a `data.table` that includes new columns
-of estimated TPT initiation- and right censoring probabilities, 
-along with columns of probability weights.
+- `weekly_records_data` = a `data.table` that includes new columns of estimated TPT initiation- and right censoring probabilities, along with columns of probability weights.
 - `models` = a `list` that includes named elements:
 	- `denom_model` = a `glm` used to model the probability of TPT initiation over the duration of follow-up
 	- `num_model` = a `glm` used to model the probability of TPT initiation over the grace period (amongst those clients who initiate in the grace period)
@@ -205,11 +174,7 @@ along with columns of probability weights.
 
 # Visualizing the distribution of TPT initiation in grace period
 
-The primary PROTECT analysis looks to make inference on the 
-effectiveness of TPT in the counterfactual scenario that *all 
-clients* initiated TPT within the grace period according to the 
-same distribution as that of clients *who were observed* to 
-initiate TPT within the grace period.
+The primary PROTECT analysis looks to make inference on the effectiveness of TPT in the counterfactual scenario that *all clients* initiated TPT within the grace period according to the same distribution as that of clients *who were observed* to initiate TPT within the grace period.
 
 Therefore, it may be beneficial to describe this distribution.
 
