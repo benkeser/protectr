@@ -51,7 +51,7 @@ create_weekly_record_data <- function(
 
     fup_start <- as_date(dat_id$enroll_date[1])
     
-    if(!is.na(dat_id$death_date)){
+    if(!is.na(dat_id$death_date[1])){
       fup_end <- min(
         dat_id$admin_cens_date, dat_id$death_date
       )
