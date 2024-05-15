@@ -44,159 +44,164 @@ create_weekly_record_data <- function(
 
   n_id <- length(unique(dat[,id]))
 
-  obs_by_week <- future.apply::future_lapply(dat[, unique(id)], function(this_id, k) {
-    
-    dat_id <- dat[id == this_id]
-    dat_id[, admin_cens_date := enroll_date + admin_cens_wks * 7]
-
-    fup_start <- as_date(dat_id$enroll_date[1])
-    
-    if(!is.na(dat_id$death_date[1])){
-      fup_end <- min(
-        dat_id$admin_cens_date, dat_id$death_date
-      )
-    }else{
-      fup_end <- min(
-        dat_id$admin_cens_date, dat_id$last_visit_date
-      )
-    }
-
-    visit_weeks_all <- seq(fup_start, fup_end + 7, by = "weeks")
-    n_weeks <- length(visit_weeks_all)
-
-    weekly_records <- data.table(
-      wk = 1:(length(visit_weeks_all) - 1),
-      week_start = visit_weeks_all[-length(visit_weeks_all)],
-      week_end = visit_weeks_all[-1]
-    )
-
-    uniq_art_init_date <- unique(dat_id$art_start_date)
-    assertthat::assert_that(length(uniq_art_init_date) == 1)
-    art_init_date <- as_date(uniq_art_init_date)
-    if (!is.na(art_init_date)) {
-      weekly_records[,
-        art_init := art_init_date %within% interval(fup_start, week_end)
-      ]
-    }else{
-      weekly_records[, art_init := FALSE]
-    }
-
-    uniq_tpt_start_date <- unique(dat_id$tpt_start_date)
-    assertthat::assert_that(length(uniq_tpt_start_date) == 1)
-    tpt_init_date <- as_date(uniq_tpt_start_date)
-    if (!is.na(tpt_init_date)) {
-      weekly_records[,
-        tpt_init := tpt_init_date %within% interval(fup_start, week_end)
-      ]
-    } else {
-      weekly_records[, tpt_init := FALSE]
-    }
-
-    cd4_count_this_id <- unique(dat_id$cd4_count)
-    cd4_count_date_this_id <- unique(dat_id$cd4_count_date)
-    assertthat::assert_that(length(cd4_count_this_id) == 1)
-
-    # find k closest clinic visits to week j 
-    # only include visits in week j if tpt_init_date not in 
-    # interval(week_start, week_end)
-    for (j in seq_len(n_weeks-1)) {
-
-      if(!is.na(tpt_init_date)){
-        tpt_init_wk_j <- tpt_init_date %within% interval(weekly_records[j, week_start], weekly_records[j, week_end])
-      }else{
-        tpt_init_wk_j <- FALSE
-      }
+  obs_by_week <- with_progress({
+    p <- progressor(steps = n_id)
+    future.apply::future_lapply(dat[, unique(id)], function(this_id, k) {
       
-      if(tpt_init_wk_j){
-        visits_before_date <- tpt_init_date
-      }else{
-        visits_before_date <- weekly_records$week_start[j]
-      }
-
-      all_prior_visit_dates <- dat_id[visit_date <= visits_before_date, visit_date]
-      if(length(all_prior_visit_dates) > 0){
-        k_most_recent_visit_dates <- dat_id$visit_date[order(visits_before_date - all_prior_visit_dates)[1:k]]
-        k_most_recent_visits <- dat_id[visit_date %in% k_most_recent_visit_dates]
-        n_visits <- nrow(k_most_recent_visits) # n_visits <= k
-      }else{
-        k_most_recent_visits <- NULL
-        n_visits <- 0
-      }
+      p()
       
-      cd4_count_variables <- summarize_cd4_count(
-        cd4_count_date = cd4_count_date_this_id, 
-        cd4_count = cd4_count_this_id,
-        visits_before_date = visits_before_date                    
-      )
-      for(cd4_count_variable in names(cd4_count_variables)){
-        weekly_records[j, (cd4_count_variable) := cd4_count_variables[[cd4_count_variable]]]
-      }
+      dat_id <- dat[id == this_id]
+      dat_id[, admin_cens_date := enroll_date + admin_cens_wks * 7]
 
-      # variables indicating whether a visit is present
-      have_visit_variables <- "have_visit_k"
-      if(k > 1){
-        have_visit_variables <- c(have_visit_variables, paste0("have_visit_kminus", 1:(k-1)))
-      }
-      visit_counter <- 0
-      for(have_visit_variable in have_visit_variables){
-        visit_counter <- visit_counter + 1
-        weekly_records[j, (have_visit_variable) := as.numeric(n_visits >= visit_counter)]
-      }
-
-      # variables summarizing ART adherence
-      art_adherence_variables <- summarize_art_adherence(k_most_recent_visits)
-      for(art_adherence_variable in names(art_adherence_variables)){
-        weekly_records[j, (art_adherence_variable) := art_adherence_variables[[art_adherence_variable]]]
-      }
+      fup_start <- as_date(dat_id$enroll_date[1])
       
-      # variables summarizing tb symptom screen results adherence
-      tb_symptoms_variables <- summarize_tb_symptoms(k_most_recent_visits)
-      for(tb_symptoms_variable in names(tb_symptoms_variables)){
-        weekly_records[j, (tb_symptoms_variable) := tb_symptoms_variables[[tb_symptoms_variable]]]
+      if(!is.na(dat_id$death_date[1])){
+        fup_end <- min(
+          dat_id$admin_cens_date, dat_id$death_date
+        )
+      }else{
+        fup_end <- min(
+          dat_id$admin_cens_date, dat_id$last_visit_date
+        )
       }
 
-      visit_times_variables <- summarize_visit_times(
-        all_prior_visit_dates = all_prior_visit_dates,
-        visits_before_date = visits_before_date,
-        k_most_recent_visits = k_most_recent_visits
+      visit_weeks_all <- seq(fup_start, fup_end + 7, by = "weeks")
+      n_weeks <- length(visit_weeks_all)
+
+      weekly_records <- data.table(
+        wk = 1:(length(visit_weeks_all) - 1),
+        week_start = visit_weeks_all[-length(visit_weeks_all)],
+        week_end = visit_weeks_all[-1]
       )
-      for(visit_times_variable in names(visit_times_variables)){
-        weekly_records[j, (visit_times_variable) := visit_times_variables[[visit_times_variable]]]
+
+      uniq_art_init_date <- unique(dat_id$art_start_date)
+      assertthat::assert_that(length(uniq_art_init_date) == 1)
+      art_init_date <- as_date(uniq_art_init_date)
+      if (!is.na(art_init_date)) {
+        weekly_records[,
+          art_init := art_init_date %within% interval(fup_start, week_end)
+        ]
+      }else{
+        weekly_records[, art_init := FALSE]
       }
-    }
+
+      uniq_tpt_start_date <- unique(dat_id$tpt_start_date)
+      assertthat::assert_that(length(uniq_tpt_start_date) == 1)
+      tpt_init_date <- as_date(uniq_tpt_start_date)
+      if (!is.na(tpt_init_date)) {
+        weekly_records[,
+          tpt_init := tpt_init_date %within% interval(fup_start, week_end)
+        ]
+      } else {
+        weekly_records[, tpt_init := FALSE]
+      }
+
+      cd4_count_this_id <- unique(dat_id$cd4_count)
+      cd4_count_date_this_id <- unique(dat_id$cd4_count_date)
+      assertthat::assert_that(length(cd4_count_this_id) == 1)
+
+      # find k closest clinic visits to week j 
+      # only include visits in week j if tpt_init_date not in 
+      # interval(week_start, week_end)
+      for (j in seq_len(n_weeks-1)) {
+
+        if(!is.na(tpt_init_date)){
+          tpt_init_wk_j <- tpt_init_date %within% interval(weekly_records[j, week_start], weekly_records[j, week_end])
+        }else{
+          tpt_init_wk_j <- FALSE
+        }
+        
+        if(tpt_init_wk_j){
+          visits_before_date <- tpt_init_date
+        }else{
+          visits_before_date <- weekly_records$week_start[j]
+        }
+
+        all_prior_visit_dates <- dat_id[visit_date <= visits_before_date, visit_date]
+        if(length(all_prior_visit_dates) > 0){
+          k_most_recent_visit_dates <- dat_id$visit_date[order(visits_before_date - all_prior_visit_dates)[1:k]]
+          k_most_recent_visits <- dat_id[visit_date %in% k_most_recent_visit_dates]
+          n_visits <- nrow(k_most_recent_visits) # n_visits <= k
+        }else{
+          k_most_recent_visits <- NULL
+          n_visits <- 0
+        }
+        
+        cd4_count_variables <- summarize_cd4_count(
+          cd4_count_date = cd4_count_date_this_id, 
+          cd4_count = cd4_count_this_id,
+          visits_before_date = visits_before_date                    
+        )
+        for(cd4_count_variable in names(cd4_count_variables)){
+          weekly_records[j, (cd4_count_variable) := cd4_count_variables[[cd4_count_variable]]]
+        }
+
+        # variables indicating whether a visit is present
+        have_visit_variables <- "have_visit_k"
+        if(k > 1){
+          have_visit_variables <- c(have_visit_variables, paste0("have_visit_kminus", 1:(k-1)))
+        }
+        visit_counter <- 0
+        for(have_visit_variable in have_visit_variables){
+          visit_counter <- visit_counter + 1
+          weekly_records[j, (have_visit_variable) := as.numeric(n_visits >= visit_counter)]
+        }
+
+        # variables summarizing ART adherence
+        art_adherence_variables <- summarize_art_adherence(k_most_recent_visits)
+        for(art_adherence_variable in names(art_adherence_variables)){
+          weekly_records[j, (art_adherence_variable) := art_adherence_variables[[art_adherence_variable]]]
+        }
+        
+        # variables summarizing tb symptom screen results adherence
+        tb_symptoms_variables <- summarize_tb_symptoms(k_most_recent_visits)
+        for(tb_symptoms_variable in names(tb_symptoms_variables)){
+          weekly_records[j, (tb_symptoms_variable) := tb_symptoms_variables[[tb_symptoms_variable]]]
+        }
+
+        visit_times_variables <- summarize_visit_times(
+          all_prior_visit_dates = all_prior_visit_dates,
+          visits_before_date = visits_before_date,
+          k_most_recent_visits = k_most_recent_visits
+        )
+        for(visit_times_variable in names(visit_times_variables)){
+          weekly_records[j, (visit_times_variable) := visit_times_variables[[visit_times_variable]]]
+        }
+      }
 
 
-    enroll_date_this_id <- dat_id[1, enroll_date]
+      enroll_date_this_id <- dat_id[1, enroll_date]
 
-    tpt_start_date_this_id <- dat_id[1, tpt_start_date]
-    tpt_start_wk_this_id <- get_week_of_event(tpt_start_date_this_id, enroll_date_this_id)
-    weekly_records[, tpt_start_wk := tpt_start_wk_this_id]
+      tpt_start_date_this_id <- dat_id[1, tpt_start_date]
+      tpt_start_wk_this_id <- get_week_of_event(tpt_start_date_this_id, enroll_date_this_id)
+      weekly_records[, tpt_start_wk := tpt_start_wk_this_id]
 
-    tb_diagnosis_date_this_id <- dat_id[1, tb_diagnosis_date]
-    tb_wk_this_id <- get_week_of_event(tb_diagnosis_date_this_id, enroll_date_this_id)
-    weekly_records[, tb_wk := tb_wk_this_id]
+      tb_diagnosis_date_this_id <- dat_id[1, tb_diagnosis_date]
+      tb_wk_this_id <- get_week_of_event(tb_diagnosis_date_this_id, enroll_date_this_id)
+      weekly_records[, tb_wk := tb_wk_this_id]
 
-    death_date_this_id <- dat_id[1, death_date]
-    death_wk_this_id <- get_week_of_event(death_date_this_id, enroll_date_this_id)
-    weekly_records[, death_wk := death_wk_this_id]
+      death_date_this_id <- dat_id[1, death_date]
+      death_wk_this_id <- get_week_of_event(death_date_this_id, enroll_date_this_id)
+      weekly_records[, death_wk := death_wk_this_id]
 
-    right_cens_date_this_id <- dat_id[1, right_cens_date_tb]
-    right_cens_wk_this_id <- get_week_of_event(right_cens_date_this_id, enroll_date_this_id)
-    weekly_records[, right_cens_wk_tb := right_cens_wk_this_id]
-    
-    last_visit_date_this_id <- dat_id[1, last_visit_date]
-    last_visit_wk_this_id <- get_week_of_event(last_visit_date_this_id, enroll_date_this_id)
-    weekly_records[, last_visit_wk := last_visit_wk_this_id]
+      right_cens_date_this_id <- dat_id[1, right_cens_date_tb]
+      right_cens_wk_this_id <- get_week_of_event(right_cens_date_this_id, enroll_date_this_id)
+      weekly_records[, right_cens_wk_tb := right_cens_wk_this_id]
+      
+      last_visit_date_this_id <- dat_id[1, last_visit_date]
+      last_visit_wk_this_id <- get_week_of_event(last_visit_date_this_id, enroll_date_this_id)
+      weekly_records[, last_visit_wk := last_visit_wk_this_id]
 
-    admin_cens_date_this_id <- dat_id[1, admin_cens_date]
-    admin_cens_wk_this_id <- get_week_of_event(admin_cens_date_this_id, enroll_date_this_id)
-    weekly_records[, admin_cens_wk := admin_cens_wk_this_id]
-    
-    # output DT of weekly records for given study unit
-    weekly_records[, id := this_id]
-    setcolorder(weekly_records, "id")
-    return(weekly_records)
-  }, k = k) # end lapply
+      admin_cens_date_this_id <- dat_id[1, admin_cens_date]
+      admin_cens_wk_this_id <- get_week_of_event(admin_cens_date_this_id, enroll_date_this_id)
+      weekly_records[, admin_cens_wk := admin_cens_wk_this_id]
+      
+      # output DT of weekly records for given study unit
+      weekly_records[, id := this_id]
+      setcolorder(weekly_records, "id")
+      return(weekly_records)
+    }, k = k) # end lapply
+  })
 
   weekly_records_allids <- rbindlist(obs_by_week)
 
