@@ -44,7 +44,7 @@ fit_propensity_models <- function(
 	  wk <= tpt_start_wk &
 	  wk <= tb_wk &
 	  wk <= death_wk &
-	  wk <= right_cens_wk 
+	  wk <= right_cens_wk_tb
 	]
 
 	# create an outcome variable column
@@ -173,24 +173,44 @@ fit_propensity_models <- function(
 	weekly_records_data[(wk == tpt_start_wk & wk <= death_wk), prob_wt_num_cntrl_death := 0]
 
 
-  # RIGHT-CENSORING weights
-	cens_model_data <- weekly_records_data[wk < admin_cens_wk]
+  # RIGHT-CENSORING weights for tb
+	cens_model_data_tb <- weekly_records_data[wk < admin_cens_wk]
 
-	cens_model_data[, cens_outcome := (wk == right_cens_wk)]
+	cens_model_data_tb[, cens_outcome := (wk == right_cens_wk_tb)]
 
 	# regress the outcome variable against covariates
 	cens_model_form <- paste0("cens_outcome ~ ", right_cens_model_formula)
-	cens_model <- glm(
+	cens_model_tb <- glm(
+		cens_model_form,
+		family = stats::binomial(),
+		data = cens_model_data_tb
+	)
+
+	fitted_values <- predict(cens_model_tb, newdata = weekly_records_data, type = "response")
+	uncens_probs <- c(1, 1 - fitted_values[1:(length(fitted_values)-1)])
+	uncens_probs[weekly_records_data$wk == 1] <- 1
+
+	weekly_records_data[, prob_wt_cens_tb := uncens_probs]
+
+
+  # RIGHT-CENSORING weights for tb
+	cens_model_data_death <- weekly_records_data[wk < admin_cens_wk]
+
+	cens_model_data_death[, cens_outcome := (wk == last_visit_wk)]
+
+	# regress the outcome variable against covariates
+	cens_model_form <- paste0("cens_outcome ~ ", right_cens_model_formula)
+	cens_model_death <- glm(
 		cens_model_form,
 		family = stats::binomial(),
 		data = cens_model_data
 	)
 
-	fitted_values <- predict(cens_model, newdata = weekly_records_data, type = "response")
+	fitted_values <- predict(cens_model_death, newdata = weekly_records_data, type = "response")
 	uncens_probs <- c(1, 1 - fitted_values[1:(length(fitted_values)-1)])
 	uncens_probs[weekly_records_data$wk == 1] <- 1
 
-	weekly_records_data[, prob_wt_cens := uncens_probs]
+	weekly_records_data[, prob_wt_cens_death := uncens_probs]
 
 
 	# 3) Turn calculated columns into appropriate weights to be used in the MSM
@@ -199,12 +219,12 @@ fit_propensity_models <- function(
 	  weekly_records_data_this_id <- weekly_records_data[id == this_id]
 	  
 	  # create weight for TPT condition
-	  weekly_records_data_this_id[, wt_tpt_tb := cumprod(prob_wt_num_tpt_tb / (prob_wt_denom_tpt_tb * prob_wt_cens))]
-	  weekly_records_data_this_id[, wt_tpt_death := cumprod(prob_wt_num_tpt_death / (prob_wt_denom_tpt_death * prob_wt_cens))]
+	  weekly_records_data_this_id[, wt_tpt_tb := cumprod(prob_wt_num_tpt_tb / (prob_wt_denom_tpt_tb * prob_wt_cens_tb))]
+	  weekly_records_data_this_id[, wt_tpt_death := cumprod(prob_wt_num_tpt_death / (prob_wt_denom_tpt_death * prob_wt_cens_death))]
 	  
 	  # create weight for control condition
-	  weekly_records_data_this_id[, wt_cntrl_tb    := cumprod(1 / (prob_wt_denom_cntrl_tb * prob_wt_cens))]
-	  weekly_records_data_this_id[, wt_cntrl_death := cumprod(1 / (prob_wt_denom_cntrl_death * prob_wt_cens))]
+	  weekly_records_data_this_id[, wt_cntrl_tb    := cumprod(1 / (prob_wt_denom_cntrl_tb * prob_wt_cens_tb))]
+	  weekly_records_data_this_id[, wt_cntrl_death := cumprod(1 / (prob_wt_denom_cntrl_death * prob_wt_cens_death))]
 	  
 	  return(weekly_records_data_this_id)
 	})
@@ -217,14 +237,16 @@ fit_propensity_models <- function(
 	out$models <- list(
 		denom_model = NULL,
 		num_model = NULL,
-		cens_model = NULL
+		cens_model_tb = NULL,
+		cens_model_death = NULL
 	)
 	out$grace_pd_wks <- grace_pd_wks
 
 	if(return_models){
 		out$models$denom_model <- strip_glm(denom_model)
 		out$models$num_model <- strip_glm(num_model)
-		out$models$cens_model <- strip_glm(cens_model)
+		out$models$cens_model_tb <- strip_glm(cens_model_tb)
+		out$models$cens_model_death <- strip_glm(cens_model_death)
 	}
 
 	return(out)

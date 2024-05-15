@@ -23,7 +23,8 @@ create_weekly_record_data <- function(
 
   assertthat::assert_that("id" %in% colnames(dat))
   assertthat::assert_that("visit_date" %in% colnames(dat))
-  assertthat::assert_that("right_cens_date" %in% colnames(dat))
+  assertthat::assert_that("right_cens_date_tb" %in% colnames(dat))
+  assertthat::assert_that("last_visit_date" %in% colnames(dat))
 
   assertthat::assert_that("enroll_date" %in% colnames(dat))
   assertthat::assert_that("art_start_date" %in% colnames(dat))
@@ -38,6 +39,8 @@ create_weekly_record_data <- function(
   # because we fill in with 0's later, make sure symptoms are coded as numeric
   assertthat::assert_that(class(dat[, tb_sx]) == "numeric")
 
+  assertthat::assert_that(all(baseline_covariates) %in% colnames(dat))
+  
   n_id <- length(unique(dat[,id]))
 
   obs_by_week <- future.apply::future_lapply(dat[, unique(id)], function(this_id, k) {
@@ -45,13 +48,19 @@ create_weekly_record_data <- function(
     dat_id <- dat[id == this_id]
     dat_id[, admin_cens_date := enroll_date + admin_cens_wks * 7]
 
-    visit_dates_start <- as_date(min(dat_id$enroll_date))
-    visit_dates_end <- as_date(
-      min(unique(dat_id$right_cens_date),
-          unique(dat_id$death_date),
-          unique(dat_id$admin_cens_date), na.rm = TRUE)
-    )
-    visit_weeks_all <- seq(visit_dates_start, visit_dates_end + 7, by = "weeks")
+    fup_start <- as_date(dat_id$enroll_date[1])
+    
+    if(!is.na(dat_id$death_date)){
+      fup_end <- min(
+        dat_id$admin_cens_date, dat_id$death_date
+      )
+    }else{
+      fup_end <- min(
+        dat_id$admin_cens_date, dat_id$last_visit_date
+      )
+    }
+
+    visit_weeks_all <- seq(fup_start, fup_end + 7, by = "weeks")
     n_weeks <- length(visit_weeks_all)
 
     weekly_records <- data.table(
@@ -65,7 +74,7 @@ create_weekly_record_data <- function(
     art_init_date <- as_date(uniq_art_init_date)
     if (!is.na(art_init_date)) {
       weekly_records[,
-        art_init := art_init_date %within% interval(visit_dates_start, week_end)
+        art_init := art_init_date %within% interval(fup_start, week_end)
       ]
     }else{
       weekly_records[, art_init := FALSE]
@@ -76,7 +85,7 @@ create_weekly_record_data <- function(
     tpt_init_date <- as_date(uniq_tpt_start_date)
     if (!is.na(tpt_init_date)) {
       weekly_records[,
-        tpt_init := tpt_init_date %within% interval(visit_dates_start, week_end)
+        tpt_init := tpt_init_date %within% interval(fup_start, week_end)
       ]
     } else {
       weekly_records[, tpt_init := FALSE]
@@ -84,6 +93,7 @@ create_weekly_record_data <- function(
 
     cd4_count_this_id <- unique(dat_id$cd4_count)
     cd4_count_date_this_id <- unique(dat_id$cd4_count_date)
+    assertthat::assert_that(length(cd4_count_this_id) == 1)
 
     # find k closest clinic visits to week j 
     # only include visits in week j if tpt_init_date not in 
@@ -166,9 +176,13 @@ create_weekly_record_data <- function(
     death_wk_this_id <- get_week_of_event(death_date_this_id, enroll_date_this_id)
     weekly_records[, death_wk := death_wk_this_id]
 
-    right_cens_date_this_id <- dat_id[1, right_cens_date]
+    right_cens_date_this_id <- dat_id[1, right_cens_date_tb]
     right_cens_wk_this_id <- get_week_of_event(right_cens_date_this_id, enroll_date_this_id)
-    weekly_records[, right_cens_wk := right_cens_wk_this_id]
+    weekly_records[, right_cens_wk_tb := right_cens_wk_this_id]
+    
+    last_visit_date_this_id <- dat_id[1, last_visit_date]
+    last_visit_wk_this_id <- get_week_of_event(last_visit_date_this_id, enroll_date_this_id)
+    weekly_records[, last_visit_wk := last_visit_wk_this_id]
 
     admin_cens_date_this_id <- dat_id[1, admin_cens_date]
     admin_cens_wk_this_id <- get_week_of_event(admin_cens_date_this_id, enroll_date_this_id)

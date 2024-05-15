@@ -7,8 +7,7 @@ output: github_document
 
 First, load the cleaned raw data into R. 
 
-For the purposes of the example code below, suppose the data 
-set that is loaded is called `dat`
+For the purposes of the example code below, suppose the data set that is loaded is called `dat`
 
 # Establish project root directory
 
