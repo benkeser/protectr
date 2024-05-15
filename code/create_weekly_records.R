@@ -115,7 +115,7 @@ create_weekly_record_data <- function(
 
       all_prior_visit_dates <- dat_id[visit_date < visits_before_date, visit_date]
       if(length(all_prior_visit_dates) > 0){
-        k_most_recent_visit_dates <- date_id$visit_date[order(visits_before_date - all_prior_visit_dates)[1:k]]
+        k_most_recent_visit_dates <- dat_id$visit_date[order(visits_before_date - all_prior_visit_dates)[1:k]]
         k_most_recent_visits <- dat_id[visit_date %in% k_most_recent_visit_dates]
         n_visits <- nrow(k_most_recent_visits) # n_visits <= k
       }else{
