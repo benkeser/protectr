@@ -124,7 +124,7 @@ create_weekly_record_data <- function(
       }
       
       cd4_count_variables <- summarize_cd4_count(
-        cd4_count_date = cd4_count_this_id, 
+        cd4_count_date = cd4_count_date_this_id, 
         cd4_count = cd4_count_this_id,
         visits_before_date = visits_before_date                    
       )
@@ -277,11 +277,11 @@ summarize_cd4_count <- function(
     cd4_count = 0,
     days_since_cd4_count = 0                  
   )
-  if((cd4_count_date < visits_before_date) & 
+  if((cd4_count_date <= visits_before_date) & 
      !(is.na(cd4_count))){
     out$have_cd4 <- 1
     out$cd4_count <- cd4_count
-    out$days_since_cd4_count <- round(visits_before_date - cd4_count_date)
+    out$days_since_cd4_count <- round(as.numeric(visits_before_date - cd4_count_date))
   }
   return(out)
 }
