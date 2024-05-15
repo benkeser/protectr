@@ -289,15 +289,15 @@ summarize_visit_times <- function(
   k_most_recent_visits
 ){
   out <- list(
-    number_encounters_last_2_weeks = 0,
-    number_encounters_last_4_weeks = 0,
+    number_encounters_last_8_weeks = 0,
+    number_encounters_last_12_weeks = 0,
     days_between_week_date_and_visit_k = 0,
     days_between_week_date_and_visit_kminus1 = 0,
     days_between_week_date_and_visit_kminus2 = 0
   )
   if(length(all_prior_visit_dates) > 0){
-    out$number_encounters_last_2_weeks <- sum(all_prior_visit_dates > (visits_before_date - 2 * 7))
-    out$number_encounters_last_4_weeks <- sum(all_prior_visit_dates > (visits_before_date - 4 * 7))
+    out$number_encounters_last_8_weeks <- sum(all_prior_visit_dates > (visits_before_date - 8 * 7))
+    out$number_encounters_last_12_weeks <- sum(all_prior_visit_dates > (visits_before_date - 12 * 7))
   }
 
   if(!is.null(k_most_recent_visits)){
