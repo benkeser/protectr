@@ -17,7 +17,7 @@ create_weekly_record_data <- function(
   baseline_covariates,
   k = 3,
   verbose = FALSE, 
-  admin_cens_wks = 52 * 2 # two years
+  admin_cens_wks = 52 * 2, # two years
   ...
 ){
 
@@ -30,6 +30,7 @@ create_weekly_record_data <- function(
   assertthat::assert_that("art_start_date" %in% colnames(dat))
   assertthat::assert_that("tpt_start_date" %in% colnames(dat))
   assertthat::assert_that("tb_diagnosis_date" %in% colnames(dat))
+  assertthat::assert_that("death_date" %in% colnames(dat))
   
   assertthat::assert_that("art_adherence" %in% colnames(dat))
   # because we fill in with 0's later, make sure adherence is coded as numeric
@@ -40,7 +41,7 @@ create_weekly_record_data <- function(
   assertthat::assert_that(class(dat[, tb_sx]) == "numeric")
 
   assertthat::assert_that(all(baseline_covariates) %in% colnames(dat))
-  
+
   n_id <- length(unique(dat[,id]))
 
   obs_by_week <- future.apply::future_lapply(dat[, unique(id)], function(this_id, k) {
