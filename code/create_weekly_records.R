@@ -40,7 +40,7 @@ create_weekly_record_data <- function(
   # because we fill in with 0's later, make sure symptoms are coded as numeric
   assertthat::assert_that(class(dat[, tb_sx]) == "numeric")
 
-  assertthat::assert_that(all(baseline_covariates) %in% colnames(dat))
+  assertthat::assert_that(all(baseline_covariates %in% colnames(dat)))
 
   n_id <- length(unique(dat[,id]))
 
