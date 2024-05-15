@@ -113,7 +113,7 @@ create_weekly_record_data <- function(
         visits_before_date <- weekly_records$week_start[j]
       }
 
-      all_prior_visit_dates <- dat_id[visit_date < visits_before_date, visit_date]
+      all_prior_visit_dates <- dat_id[visit_date <= visits_before_date, visit_date]
       if(length(all_prior_visit_dates) > 0){
         k_most_recent_visit_dates <- dat_id$visit_date[order(visits_before_date - all_prior_visit_dates)[1:k]]
         k_most_recent_visits <- dat_id[visit_date %in% k_most_recent_visit_dates]
@@ -128,6 +128,9 @@ create_weekly_record_data <- function(
         cd4_count = cd4_count_this_id,
         visits_before_date = visits_before_date                    
       )
+      for(cd4_count_variable in names(cd4_count_variables)){
+        weekly_records[j, (cd4_count_variable) := cd4_count_variables[[cd4_count_variable]]]
+      }
 
       # variables indicating whether a visit is present
       have_visit_variables <- "have_visit_k"
@@ -277,7 +280,7 @@ summarize_cd4_count <- function(
   if((cd4_count_date < visits_before_date) & 
      !(is.na(cd4_count))){
     out$have_cd4 <- 1
-    out$cd4_cound <- cd4_count
+    out$cd4_count <- cd4_count
     out$days_since_cd4_count <- round(visits_before_date - cd4_count_date)
   }
   return(out)
