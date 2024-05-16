@@ -7,14 +7,14 @@ compute_cuminc <- function(
 	df_z1 <- data.frame(z = 1, wk = seq_len(max_wk))
 	df_z0 <- data.frame(z = 0, wk = seq_len(max_wk))
 
-	haz_tb_z1 <- predict(msm_fit_tb, newdata = df_z1, type = "response")
-	haz_tb_z0 <- predict(msm_fit_tb, newdata = df_z0, type = "response")
+	haz_tb_z1 <- predict(msm_fit_tb$msm_model, newdata = df_z1, type = "response")
+	haz_tb_z0 <- predict(msm_fit_tb$msm_model, newdata = df_z0, type = "response")
 	
-	haz_death_z1 <- predict(msm_fit_death, newdata = df_z1, type = "response")
-	haz_death_z0 <- predict(msm_fit_death, newdata = df_z0, type = "response")
+	haz_death_z1 <- predict(msm_fit_death$msm_model, newdata = df_z1, type = "response")
+	haz_death_z0 <- predict(msm_fit_death$msm_model, newdata = df_z0, type = "response")
 
-	haz_death_for_tb_z1 <- predict(msm_fit_death_for_tb, newdata = df_z1, type = "response")
-	haz_death_for_tb_z0 <- predict(msm_fit_death_for_tb, newdata = df_z0, type = "response")
+	haz_death_for_tb_z1 <- predict(msm_fit_death_for_tb$msm_model, newdata = df_z1, type = "response")
+	haz_death_for_tb_z0 <- predict(msm_fit_death_for_tb$msm_model, newdata = df_z0, type = "response")
 	
 	allcause_haz_tb_z1 <- haz_death_for_tb_z1 + haz_tb_z1
 	allcause_haz_tb_z0 <- haz_death_for_tb_z0 + haz_tb_z0
