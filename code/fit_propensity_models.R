@@ -176,7 +176,7 @@ fit_propensity_models <- function(
   # RIGHT-CENSORING weights for tb
 	cens_model_data_tb <- weekly_records_data[wk < admin_cens_wk]
 
-	cens_model_data_tb[, cens_outcome := (wk == right_cens_wk_tb)]
+	cens_model_data_tb[, cens_outcome := (wk == right_cens_wk_tb) & ((tb_wk == 99999) | (death_wk == 99999))]
 
 	# regress the outcome variable against covariates
 	cens_model_form <- paste0("cens_outcome ~ ", right_cens_model_formula)
@@ -196,7 +196,7 @@ fit_propensity_models <- function(
   # RIGHT-CENSORING weights for tb
 	cens_model_data_death <- weekly_records_data[wk < admin_cens_wk]
 
-	cens_model_data_death[, cens_outcome := (wk == last_visit_wk)]
+	cens_model_data_death[, cens_outcome := (wk == last_visit_wk) & (death_wk == 99999)]
 
 	# regress the outcome variable against covariates
 	cens_model_form <- paste0("cens_outcome ~ ", right_cens_model_formula)
@@ -214,7 +214,7 @@ fit_propensity_models <- function(
 
 
 	# 3) Turn calculated columns into appropriate weights to be used in the MSM
-	wts_by_id <- lapply(weekly_records_data[, unique(id)], function(this_id) {
+	wts_by_id <- futute.apply::future_lapply(weekly_records_data[, unique(id)], function(this_id) {
 	  # subset to each id
 	  weekly_records_data_this_id <- weekly_records_data[id == this_id]
 	  

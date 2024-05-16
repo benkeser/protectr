@@ -133,6 +133,8 @@ new_admin_cens_wk <- 52
 weekly_records_data_exclude <- weekly_records_data[
 	wk < new_admin_cens_wk
 ]
+# confirm this is correct
+weekly_records_data_exclude$admin_cens_wk <- new_admin_cens_wk
 ```
 
 
