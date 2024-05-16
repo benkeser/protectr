@@ -17,7 +17,7 @@ fit_msm <- function(
 		msm_fit <- strip_glm(msm_fit)
 	}else{
 		msm_fit <- geepack::geeglm(
-			msm_form,
+			as.formula(msm_form),
 			data = cloned_data_set,
 			id = id,
 			family = stats::binomial(),
