@@ -203,7 +203,7 @@ fit_propensity_models <- function(
 	cens_model_death <- glm(
 		cens_model_form,
 		family = stats::binomial(),
-		data = cens_model_data
+		data = cens_model_data_death
 	)
 
 	fitted_values <- predict(cens_model_death, newdata = weekly_records_data, type = "response")
