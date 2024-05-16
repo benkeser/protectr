@@ -18,7 +18,7 @@ fit_msm <- function(
 	}else{
 		msm_fit <- geepack::geeglm(
 			msm_form,
-			data = clone_data_set,
+			data = cloned_data_set,
 			id = id,
 			family = stats::binomial(),
 			weights = wt_k,
