@@ -214,7 +214,7 @@ fit_propensity_models <- function(
 
 
 	# 3) Turn calculated columns into appropriate weights to be used in the MSM
-	wts_by_id <- futute.apply::future_lapply(weekly_records_data[, unique(id)], function(this_id) {
+	wts_by_id <- future.apply::future_lapply(weekly_records_data[, unique(id)], function(this_id) {
 	  # subset to each id
 	  weekly_records_data_this_id <- weekly_records_data[id == this_id]
 	  
