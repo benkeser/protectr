@@ -29,7 +29,7 @@ fit_msm <- function(
 
 	msm_coef <- msm_fit$coefficients
 
-	if(return_vcov){
+	if(return_msm_vcov){
 		msm_vcov <- vcov(msm_fit)
 	}else{
 		msm_vcov <- NULL
