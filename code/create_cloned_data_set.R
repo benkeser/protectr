@@ -24,10 +24,11 @@ create_cloned_data_set <- function(
 	assertthat::assert_that(all(endpoint %in% c("tb", "death", "death_for_tb")))
 
 	if("tb" %in% endpoint){
-		weekly_records_tb_z1 <- propensity_output$weekly_records_data[
-		  ((tpt_start_wk <= propensity_output$grace_pd_wks) & (wk <= min(tb_wk, right_cens_wk_tb))) |
-	    ((tpt_start_wk > propensity_output$grace_pd_wks) & (wk <= propensity_output$grace_pd_wks) & (wk <= min(tb_wk, right_cens_wk_tb)))
-	  ]
+		weekly_records_tb_z1 <- propensity_output$weekly_records_data[,
+			.SD[(wk <= pmin(tb_wk, right_cens_wk_tb) & tpt_start_wk <= propensity_output$grace_pd_wks) |
+				  ((tpt_start_wk > propensity_output$grace_pd_wks) & (wk <= propensity_output$grace_pd_wks) & (wk <= pmin(tb_wk, right_cens_wk_tb)))],
+			by = id
+		]
 	  weekly_records_tb_z1[, z := 1]
 	}
 	

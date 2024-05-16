@@ -236,7 +236,11 @@ The latter data set is needed to generate cumulative incidence plots for `tb` wh
 
 ## Fit marginal structural models
 
-Next, we make several calls to the `fit_msm` function to generate estimates of the parameter of the MSM.
+Next, we make several calls to the `fit_msm` function in `code/fit_msm.R` to generate estimates of the parameter of the MSM.
+
+```{r, eval = FALSE}
+source(here::here("code/fit_msm.R"))
+```
 
 The input to this function includes:
 
