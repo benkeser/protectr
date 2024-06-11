@@ -318,16 +318,16 @@ The code should be repeated for the other two outcomes in
 
 ``` r
 msm_fit_death <- fit_msm(
-  cloned_data_set = cloned_data_sets$death, 
-  msm_formula = ...,
+    cloned_data_set = cloned_data_sets$death, 
+    msm_formula = ...,
     return_msm_model = TRUE,
     gee = FALSE,
     return_msm_vcov = FALSE
 )
 
 msm_fit_death_for_tb <- fit_msm(
-  cloned_data_set = cloned_data_sets$death_for_tb, 
-  msm_formula = ...,
+    cloned_data_set = cloned_data_sets$death_for_tb, 
+    msm_formula = ...,
     return_msm_model = TRUE,
     gee = FALSE,
     return_msm_vcov = FALSE
@@ -354,11 +354,11 @@ week for which plotting is desired.
 
 ``` r
 cuminc <- compute_cuminc(
-        msm_fit_tb = msm_fit_tb,
-        msm_fit_death = msm_fit_death,
-        msm_fit_death_for_tb = msm_fit_death_for_tb,
-        max_wk = 52 * 2
-    )
+    msm_fit_tb = msm_fit_tb,
+    msm_fit_death = msm_fit_death,
+    msm_fit_death_for_tb = msm_fit_death_for_tb,
+    max_wk = 52 * 2
+)
 ```
 
 The output is a `data.frame` with columns:
