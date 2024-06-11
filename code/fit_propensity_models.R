@@ -193,7 +193,7 @@ fit_propensity_models <- function(
 	weekly_records_data[, prob_wt_cens_tb := uncens_probs]
 
 
-  # RIGHT-CENSORING weights for tb
+  # RIGHT-CENSORING weights for death
 	cens_model_data_death <- weekly_records_data[wk < admin_cens_wk]
 
 	cens_model_data_death[, cens_outcome := (wk == last_visit_wk) & (death_wk == 99999)]

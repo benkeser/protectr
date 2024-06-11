@@ -26,8 +26,8 @@ These variables should have the same value for each row of data for a client.
 	- ultimately, we exclude individuals with TB within 30 days of enrollment into care
 		- this should happen upstream for efficiency of sensitivity analyses
 - `right_cens_date_tb` = date variable identifying the last date at which the TB status of the client could be ascertained with reasonable certainty
-	- for individuals who are never lost to follow-up for a period longer than 12 months, this should be the date of the last clinic visit
-	- for individuals who are lost to follow-up for a period longer than 12 months, this should be the date of the last clinic visit prior to becoming lost to follow-up
+	- for individuals who are never lost to follow-up for a period longer than 6 months, this should be the date of the last clinic visit
+	- for individuals who are lost to follow-up for a period longer than 6 months, this should be the date of the last clinic visit prior to becoming lost to follow-up
 	- should not be `NA` for any client
 - `last_visit_date` = last date that client was seen in the clinic
 	- should not be `NA` for any client

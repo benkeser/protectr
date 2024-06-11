@@ -112,7 +112,7 @@ To exclude participants with early TB diagnosis, we can do the following:
 # e.g., exclude cases within 30 days of enrollment into care
 exclusion_period <- 30
 weekly_records_data_exclude <- weekly_records_data[
- is.na(tb_diagnosis_date) | (tb_diagnosis_date - enroll_date > 30)
+ is.na(tb_diagnosis_date) | (tb_diagnosis_date - enroll_date > exclusion_period)
 ]
 ```
 

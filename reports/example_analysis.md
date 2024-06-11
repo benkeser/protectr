@@ -129,7 +129,7 @@ following:
 # e.g., exclude cases within 30 days of enrollment into care
 exclusion_period <- 30
 weekly_records_data_exclude <- weekly_records_data[
- is.na(tb_diagnosis_date) | (tb_diagnosis_date - enroll_date > 30)
+ is.na(tb_diagnosis_date) | (tb_diagnosis_date - enroll_date > exclusion_period)
 ]
 ```
 
@@ -152,6 +152,8 @@ new_admin_cens_wk <- 52
 weekly_records_data_exclude <- weekly_records_data[
     wk < new_admin_cens_wk
 ]
+# confirm this is correct
+weekly_records_data_exclude$admin_cens_wk <- new_admin_cens_wk
 ```
 
 # Fitting propensity scores
@@ -278,8 +280,12 @@ The latter data set is needed to generate cumulative incidence plots for
 
 ## Fit marginal structural models
 
-Next, we make several calls to the `fit_msm` function to generate
-estimates of the parameter of the MSM.
+Next, we make several calls to the `fit_msm` function in
+`code/fit_msm.R` to generate estimates of the parameter of the MSM.
+
+``` r
+source(here::here("code/fit_msm.R"))
+```
 
 The input to this function includes:
 
