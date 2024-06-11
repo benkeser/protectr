@@ -305,8 +305,8 @@ The input to this function includes:
 
 ``` r
 msm_fit_tb <- fit_msm(
-  cloned_data_set = cloned_data_sets$tb, 
-  msm_formula = ...,
+    cloned_data_set = cloned_data_sets$tb, 
+    msm_formula = ...,
     return_msm_model = TRUE,
     gee = FALSE,
     return_msm_vcov = FALSE
