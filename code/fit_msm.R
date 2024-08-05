@@ -1,12 +1,22 @@
 fit_msm <- function(
-	cloned_data_set, 
-	msm_formula = "splines::ns(wk, 3) + z",
+	cloned_data_set,
+	msm_formula = NULL,
+	baseline_haz_model = "splines::ns(wk, 3)",
+	effect_hetero_variable = "none",
 	gee = FALSE,
 	return_msm_model = FALSE,
 	return_msm_vcov = FALSE,
 	...
 ){
-	msm_form <- paste0("dN ~ ", msm_formula)
+	if(is.null(msm_formula)){
+		msm_form <- paste0("dN ~ ", baseline_haz_model, " + z")
+		if(effect_hetero_variable != "none"){
+			msm_form <- paste0(msm_form, "*", effect_hetero_variable)
+		}
+	}else{
+		msm_form <- paste0("dN ~ ", msm_formula)
+	}
+
 	if(!gee){
 		msm_fit <- glm(
 			msm_form,
@@ -35,10 +45,20 @@ fit_msm <- function(
 		msm_vcov <- NULL
 	}
 
+	if(!is.null(effect_hetero_variable)){
+		effect_hetero_variable_vals <- sort(
+			unique(cloned_data_set[[effect_hetero_variable]])
+		)
+	}else{
+		effect_hetero_variable_vals <- NULL
+	}
+
 	out <- list(
 		msm_coef = msm_coef,
 		msm_vcov = msm_vcov,
-		msm_model = NULL
+		msm_model = NULL,
+		effect_hetero_variable = effect_hetero_variable,
+		effect_hetero_variable_vals = effect_hetero_variable_vals
 	)
 	if(return_msm_model){
 		out$msm_model <- msm_fit

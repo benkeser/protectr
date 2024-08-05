@@ -94,6 +94,10 @@ do_one_bootstrap <- function(
 		propensity_output = propensity_output
 	)
 
+  # we need to loop code between <<<<<< and >>>>> 
+  # setting effect_hetero_variable to "none" and then to whatever
+  # the user inputs for effect_hetero_variables
+  # <<<<<<<<<<
 	msm_fits_tb <- sapply(msm_formulas_tb, 
 		FUN = fit_msm,
 		cloned_data_set = cloned_data_sets$tb, 
@@ -130,6 +134,7 @@ do_one_bootstrap <- function(
 		simplify = FALSE,
 		USE.NAMES = TRUE
 	)
+	# >>>>>>>>>>>>
 
 	out <- list(
 		cf_init_dist = cf_init_dist,
