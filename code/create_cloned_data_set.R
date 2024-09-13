@@ -18,6 +18,7 @@
 create_cloned_data_set <- function(
 	propensity_output,
 	endpoint = c("tb", "death", "death_for_tb"),
+	mdr = "no"
 	...
 ){
 
@@ -79,13 +80,20 @@ create_cloned_data_set <- function(
 	# combining the z = 1 and z = 0 data
 	if("tb" %in% endpoint){
 		cloned_data_tb <- rbindlist(list(weekly_records_tb_z1, weekly_records_tb_z0))
-		cloned_data_tb[, dN := (wk == tb_wk)]
+
+		if(mdr = "no"){
+			cloned_data_tb[, dN := (wk == tb_wk)]
+		}else{
+			cloned_data_tb[, dN_mdr := (wk == tb_wk) & (mdr == 1) ]
+			cloned_data_tb[, dN_not_mdr := (wk == tb_wk) & (mdr == 0)]
+		}
+
 		cloned_data_tb[, wt_k := ifelse(z == 1, wt_tpt_tb, wt_cntrl_tb)]
 	}else{
 		cloned_data_tb <- NULL
 	}
 
-	# creating the TB outcome
+	# creating the death outcome
 	if("death" %in% endpoint){
 		cloned_data_death <- rbindlist(list(weekly_records_death_z1, weekly_records_death_z0))
 		cloned_data_death[, dN := (wk == death_wk)]
