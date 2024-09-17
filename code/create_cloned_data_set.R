@@ -18,7 +18,7 @@
 create_cloned_data_set <- function(
 	propensity_output,
 	endpoint = c("tb", "death", "death_for_tb"),
-	mdr = "no"
+	mdr = "no",
 	...
 ){
 
@@ -81,7 +81,7 @@ create_cloned_data_set <- function(
 	if("tb" %in% endpoint){
 		cloned_data_tb <- rbindlist(list(weekly_records_tb_z1, weekly_records_tb_z0))
 
-		if(mdr = "no"){
+		if(mdr == "no"){
 			cloned_data_tb[, dN := (wk == tb_wk)]
 		}else{
 			cloned_data_tb[, dN_mdr := (wk == tb_wk) & (mdr == 1) ]
