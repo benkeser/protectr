@@ -80,10 +80,10 @@ compute_cuminc <- function(
 ){
 
 	if(!is.null(msm_fit_tb)){
-		effect_hetero_variable_present <- (msm_fit_tb$effect_hetero_variable != "none")
+		effect_hetero_variable_present <- !is.null(msm_fit_tb$effect_hetero_variable)
 		effect_hetero_variable <- msm_fit_tb$effect_hetero_variable
 	}else{
-		effect_hetero_variable_present <- (msm_fit_mdr_tb$effect_hetero_variable != "none")
+		effect_hetero_variable_present <- !is.null(msm_fit_mdr_tb$effect_hetero_variable)
 		effect_hetero_variable <- msm_fit_mdr_tb$effect_hetero_variable
 	}
 
@@ -98,16 +98,17 @@ compute_cuminc <- function(
 			msm_fit_death_for_tb = msm_fit_death_for_tb)
 		)
 	}else{
-		out <- sapply(msm_fit_tb$effect_hetero_variable_vals, simplify = FALSE, function(val){
+		out <- sapply(msm_fit_tb$effect_hetero_variable_vals, function(val, ...){
 			df_z1 <- data.frame(z = 1, wk = seq_len(max_wk), tmp = val)
 			df_z0 <- data.frame(z = 0, wk = seq_len(max_wk), tmp = val)
 			colnames(df_z1)[3] <- colnames(df_z0)[3] <- effect_hetero_variable
-			compute_cuminc_(df_z1, df_z0, max_wk)
+			compute_cuminc_(df_z1, df_z0, max_wk, ...)
 		}, msm_fit_tb = msm_fit_tb,
 			msm_fit_mdr_tb = msm_fit_mdr_tb,
 			msm_fit_not_mdr_tb = msm_fit_not_mdr_tb,
 			msm_fit_death = msm_fit_death,
-			msm_fit_death_for_tb = msm_fit_death_for_tb)
+			msm_fit_death_for_tb = msm_fit_death_for_tb,
+	  	simplify = FALSE)
 	}
 	return(out)
 }

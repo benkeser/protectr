@@ -1,24 +1,35 @@
 fit_msm <- function(
 	cloned_data_set,
-	msm_formula = NULL,
-	baseline_haz_model = "splines::ns(wk, 3)",
-	effect_hetero_variable = "none",
-	outcomes = "dN", # could add dN_mdr_tb, dN_not_mdr_tb
+	msm_formula = "splines::ns(wk, 3) + z",
+	outcome = "dN", # could add dN_mdr_tb, dN_not_mdr_tb
 	gee = FALSE,
 	return_msm_model = FALSE,
 	return_msm_vcov = FALSE,
 	...
 ){
-	if(is.null(msm_formula)){
-		msm_form <- paste0(outcome, " ~ ", baseline_haz_model, " + z")
-		if(effect_hetero_variable != "none"){
-			msm_form <- paste0(msm_form, "*", effect_hetero_variable)
-		}
-	}else{
-		msm_form <- paste0(outcome, " ~ ", msm_formula)
-	}
+	# if(is.null(msm_formula)){
+	# 	msm_form <- paste0(outcome, " ~ ", baseline_haz_model, " + z")
+	# 	if(effect_hetero_variable != "none"){
+	# 		msm_form <- paste0(msm_form, "*", effect_hetero_variable)
+	# 	}
+	# }else{
+	#   msm_form <- paste0(outcome, " ~ ", msm_formula)
+	# }
 	
-
+	# look in msm_formula for z* or *z
+	# split msm_formula on * and take the element that is not "z"
+	# > str_split(msm_formula, "\\*")[[1]]
+	# [1] "blah" "z"   
+		
+  assertthat::assert_that(startsWith(msm_formula, "splines::ns(wk, 3) + z") == TRUE)
+  if(!is.na(str_split(msm_formula, "\\*")[[1]][2])){
+    effect_hetero_variable <- str_split(msm_formula, "\\*")[[1]][2]
+  }else{
+    effect_hetero_variable <- NULL
+  }
+  
+  msm_form <- paste0(outcome, " ~ ", msm_formula)
+	
 	# if(is.null(msm_formula)){
 	# 	msm_form <- paste0("dN ~ ", baseline_haz_model, " + z")
 	# 	if(effect_hetero_variable != "none"){
