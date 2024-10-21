@@ -3,6 +3,13 @@ title: Example code for primary PROTECT analysis
 output: github_document
 ---
 
+```{r, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      error = TRUE,
+                      message = FALSE,
+                      warning = FALSE)
+```
+
 # Load cleaned raw data
 
 First, load the cleaned raw data into R. 
@@ -13,7 +20,7 @@ For the purposes of the example code below, suppose the data set that is loaded 
 
 To avoid dealing with having to re-write absolute filepaths, we can make use of the `here` package. The following code establishes the root directory of the project. Subsequent filepaths can then be written relative to this root directory.
 
-```{r, eval = FALSE}
+```{r}
 # set working directory to protectr/ folder using setwd()
 here::i_am("reports/example_analysis.Rmd")
 ```
@@ -24,7 +31,7 @@ The first step in the analysis is to map the original data set to a long format 
 
 This is done using the `create_weekly_record_data` function contained in `code/create_weekly_records.R`
 
-```{r, eval = FALSE}
+```{r}
 source(here::here("code/create_weekly_records.R"))
 ```
 
@@ -38,7 +45,7 @@ following options:
 
 This function call is quite time consuming. However, it can be parallelized to speed up computations using the `future` package.
 
-```{r, eval = FALSE}
+```{r}
 # determine number of cores on machine
 ncores <- parallel::detectCores()
 
@@ -51,7 +58,7 @@ future::plan('multisession', workers = ncores - 1)
 
 Once appropriate inputs have been determined, we are able to run the function.
 
-```{r, eval = FALSE}
+```{r}
 weekly_records_data <- create_weekly_record_data(
   dat = dat,
   baseline_covariates = ...,
@@ -64,7 +71,7 @@ __After this function completes, be sure to save the data!__
 
 The data can *either* be saved in `csv` *or* `.rds` format, as shown below.
 
-```{r, eval = FALSE}
+```{r}
 # code to save as .csv
 fwrite(
 	weekly_records_data, 
@@ -80,7 +87,7 @@ saveRDS(
 
 In future sessions, you can load the data back into a new R session as follows.
 
-```{r, eval = FALSE}
+```{r}
 # reestablish project root directory if needed
 # set working directory to protectr/ folder using setwd()
 here::i_am("reports/example_analysis.Rmd")
@@ -108,7 +115,7 @@ some specified period after enrollment into care;
 
 To exclude participants with early TB diagnosis, we can do the following:
 
-```{r, eval = FALSE}
+```{r}
 # e.g., exclude cases within 30 days of enrollment into care
 exclusion_period <- 30
 weekly_records_data_exclude <- weekly_records_data[
@@ -118,7 +125,7 @@ weekly_records_data_exclude <- weekly_records_data[
 
 To subset data based on year of enrollment into care, we can do the follow:
 
-```{r, eval = FALSE}
+```{r}
 exclusion_date <- as.Date("2016/01/01")
 weekly_records_data_exclude <- weekly_records_data[
 	enroll_date > exclusion_date
@@ -127,7 +134,7 @@ weekly_records_data_exclude <- weekly_records_data[
 
 To exclude participants after an earlier administrative censoring date, we can do the following.
 
-```{r, eval = FALSE}
+```{r}
 # should be <= admin_cens_wk used in call to create_weekly_records
 new_admin_cens_wk <- 52
 weekly_records_data_exclude <- weekly_records_data[
@@ -142,7 +149,7 @@ weekly_records_data_exclude$admin_cens_wk <- new_admin_cens_wk
 
 Once the weekly data have been created (and appropriately subset as desired), the next step in the analysis is to estimate the probability of TPT initiation and the probability of right censoring. This is done via the `fit_propensity_models` function included in `code/fit_propensity_models.R` script.
 
-```{r, eval = FALSE}
+```{r}
 source(here::here("code/fit_propensity_models.R"))
 ```
 
@@ -155,7 +162,7 @@ There are several relevant options to this function:
 - `right_cens_model_formula` = a `string` giving the right-hand side of the model formula for modeling right-censoring probability
 - `return_models` = a `boolean` indicating whether the fitted `glm` objects should be returned as part of the output (default value is `TRUE`)
 
-```{r, eval = FALSE}
+```{r}
 propensity_output <- fit_propensity_models(
 	weekly_records_data = weekly_records_data_exclude,
 	grace_pd_wks = ...,
@@ -182,13 +189,13 @@ Therefore, it may be beneficial to describe this distribution.
 A helper function `compute_cf_init_dist` contained in the 
 `code/compute_cf_init_dist.R` script can be used to this end.
 
-```{r, eval = FALSE}
+```{r}
 source(here::here("code/compute_cf_init_dist.R"))
 ```
 
 The only input options to this function is the output from the `fit_propensity_models`.
 
-```{r, eval = FALSE}
+```{r}
 cf_init_dist <- compute_cf_init_dist(propensity_output)
 ```
 
@@ -201,7 +208,7 @@ The output is a `data.frame` with columns:
 
 This output can be plotted, e.g.:
 
-```{r, eval = FALSE}
+```{r}
 plot(
   pmf ~ wk, data = cf_init_dist,
   xlab = "Week", ylab = "Prob. TPT initiation"
@@ -214,13 +221,13 @@ Next, we generate cloned data sets that are used to fit the marginal structural 
 
 The helper function to do so is included in `code/create_cloned_data_set.R`
 
-```{r, eval = FALSE}
+```{r}
 source(here::here("code/create_cloned_data_set.R"))
 ```
 
 The function takes only the output from the propensity models above as input.
 
-```{r, eval = FALSE}
+```{r}
 cloned_data_sets <- create_cloned_data_set(
 	propensity_output = propensity_output
 )
@@ -238,7 +245,7 @@ The latter data set is needed to generate cumulative incidence plots for `tb` wh
 
 Next, we make several calls to the `fit_msm` function in `code/fit_msm.R` to generate estimates of the parameter of the MSM.
 
-```{r, eval = FALSE}
+```{r}
 source(here::here("code/fit_msm.R"))
 ```
 
@@ -251,7 +258,7 @@ The input to this function includes:
 - `gee` = `boolean` indicating whether to use `geepack` (instead of `glm`) to fit MSM
 - `return_msm_vcov` = `boolean` indicating whether to return the variance/covariance matrix from the fit
 
-```{r, eval = FALSE}
+```{r}
 msm_fit_tb <- fit_msm(
 	cloned_data_set = cloned_data_sets$tb, 
 	msm_formula = ...,
@@ -263,7 +270,7 @@ msm_fit_tb <- fit_msm(
 
 The code should be repeated for the other two outcomes in `cloned_data_sets` as well.
 
-```{r, eval = FALSE}
+```{r}
 msm_fit_death <- fit_msm(
 	cloned_data_set = cloned_data_sets$death, 
 	msm_formula = ...,
@@ -292,13 +299,13 @@ The output of the call to `fit_msm` is a `list` with elements:
 
 The outputs of the MSMs can be visualized by first calling `compute_cuminc` function from `code/compute_cuminc.R`
 
-```{r, eval = FALSE}
+```{r}
 source(here::here("code/compute_cuminc.R"))
 ```
 
 The three MSMs are passed to `compute_cuminc` along with the maximum week for which plotting is desired.
 
-```{r, eval = FALSE}
+```{r}
 cuminc <- compute_cuminc(
 	msm_fit_tb = msm_fit_tb,
 	msm_fit_death = msm_fit_death,
@@ -321,16 +328,16 @@ The output is a `data.frame` with columns:
 
 This `data.frame` can be used for plotting, e.g.:
 
-```{r, eval = FALSE}
+```{r}
 plot(
-	x = wk, y = cif_tb_z1, data = cuminc,
+	x = cuminc[[1]]$wk, y = cuminc[[1]]$cif_tb_z1,
 	type = "l", lwd = 2, col = 1,
-	ylim = c(0, 0.4),
+	ylim = c(0, 1),
 	xlab = "Week after enrollment into care",
 	ylab = "Cumulative incidence"
 )
 lines(
-	x = wk, y = cif_tb_z0, data = cuminc,
+	x = cuminc[[1]]$wk, y = cuminc[[1]]$cif_tb_z0,
 	lwd = 2, col = 2,
 )
 ```
@@ -343,7 +350,7 @@ This procedure involves re-sampling with replacement from `weekly_records_data` 
 
 Various helper functions are included in `code/bootstrap.R` to aid in this analysis.
 
-```{r, eval = FALSE}
+```{r}
 source(here::here("code/bootstrap.R"))
 ```
 
@@ -360,13 +367,13 @@ To increase the efficiency of the code, it is possible to obtain bootstrap resul
 
 As above, the bootstrap process is parallelized using `future`, so be sure to specify a `future::plan` as necessary.
 
-```{r, eval = FALSE}
+```{r,}
 future::plan('multisession', workers = ncores - 1)
 
 bootstrap_results <- run_bootstrap(
 	nboot = 1e3,
 	# ensure all these inputs are same as above!
-  weekly_records_data = ...,
+  weekly_records_data = weekly_records_data,
   grace_pd_wks = ...,
   denom_model_formula = ...,
   num_model_formula = ...,
@@ -375,13 +382,13 @@ bootstrap_results <- run_bootstrap(
   # input all msm formulas that are of interest
   msm_formulas_tb = ...,
   msm_formulas_death = ...,
-  msm_formulas_death_for_tb = ...,
+  msm_formulas_death_for_tb = ...
 )
 ```
 
 After the bootstrap process has completed, you should save the results to ensure results are not lost. E.g.,
 
-```{r, eval = FALSE}
+```{r}
 saveRDS(
 	bootstrap_results,
 	here::here("data/bootstrap_results.rds")
@@ -390,7 +397,7 @@ saveRDS(
 
 Finally, confidence intervals and other relevant information for inference can be obtained using the `get_bootstrap_ci` function.
 
-```{r, eval = FALSE}
+```{r}
 bootstrap_ci <- get_bootstrap_ci(bootstrap_results)
 ```
 
@@ -401,6 +408,24 @@ The output of this function is a named `list` with elements:
 - `msm_fits_death_ci` = same as above, but for death outcome
 - `cuminc_ci` = a `list` with a named element for each element of `msm_formulas_tb` that was inputted to `run_bootstrap`. Each element of this list contains a `data.frame` with columns `wk`, and confidence intervals for each of the relevant parameters used to describe counterfactual incidence of TB and mortality over time. The names of these columns should be self-explanatory.
 
+The final set of outputs can be combined into a `list` named `results` that combines the `propensity_output`, `cf_init_dist`, `msm_fit`, `cuminc`, `bootstrap_results`, and `bootstrap_ci` objects.
 
+```{r}
+models <- mget(ls(pattern = paste0("^", "msm")))
+cumincs <- mget(ls(pattern = paste0("^", "cuminc")))
+results <- mget(c(ls(pattern = paste0("^", "propensity")),
+                  ls(pattern = paste0("^", "cf_init")),
+                  ls(pattern = paste0("^", "models")),
+                  ls(pattern = paste0("^", "cumincs")),
+                  ls(pattern = paste0("^", "bootstrap_r")),
+                  ls(pattern = paste0("^", "bootstrap_ci"))))
+```
 
+The results can be saved in `.rds` format, as shown below.
 
+```{r}
+saveRDS(
+	results,
+	here::here("data/R_results.rds")
+)
+```

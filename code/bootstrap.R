@@ -53,11 +53,11 @@
 #'     each of the MSM fits
 
 try_one_bootstrap <- function(
-  weekly_records_data,
-  grace_pd_wks,
-  denom_model_formula,
-  num_model_formula,
-  right_cens_model_formula,   
+  weekly_records_data = weekly_records_data,
+  grace_pd_wks = 8,
+  denom_model_formula = "1",
+  num_model_formula = denom_model_formula,
+  right_cens_model_formula = "1",   
   msm_formulas_tb = "splines::ns(wk, 3) + z",
   msm_formulas_death = "splines::ns(wk, 3) + z",
   msm_formulas_death_for_tb = msm_formulas_death,
@@ -66,15 +66,15 @@ try_one_bootstrap <- function(
   tryCatch({
     return(
       do_one_bootstrap(
-        weekly_records_data, # ideally add weekly_records_data = weekly_records_Data etc...
-        grace_pd_wks,
-        denom_model_formula,
-        num_model_formula,
-        right_cens_model_formula,   
+        weekly_records_data = weekly_records_data,
+        grace_pd_wks = 8,
+        denom_model_formula = "1",
+        num_model_formula = denom_model_formula,
+        right_cens_model_formula = "1",   
         msm_formulas_tb = msm_formulas_tb,
         msm_formulas_death = msm_formulas_death,
         msm_formulas_death_for_tb = msm_formulas_death,
-        admin_cens_wks = admin_cens_wks
+        admin_cens_wks = 52 * 2
       )
     )
   }, error = function(e){
@@ -92,11 +92,11 @@ try_one_bootstrap <- function(
 }
 
 do_one_bootstrap <- function(
-  weekly_records_data,
-  grace_pd_wks,
-  denom_model_formula,
-  num_model_formula,
-  right_cens_model_formula,   
+  weekly_records_data = weekly_records_formula,
+  grace_pd_wks = 8,
+  denom_model_formula = "1",
+  num_model_formula = denom_model_formula,
+  right_cens_model_formula = "1",   
   msm_formulas_tb = "splines::ns(wk, 3) + z",
   msm_formulas_death = "splines::ns(wk, 3) + z",
   msm_formulas_death_for_tb = msm_formulas_death,
@@ -117,7 +117,7 @@ do_one_bootstrap <- function(
 	setnames(weekly_records_data_bootstrap, old = "new_id", new = "id")
 
 	propensity_output <- fit_propensity_models(
-		weekly_records_data,
+		weekly_records_data_bootstrap,
 		grace_pd_wks = grace_pd_wks,
 		denom_model_formula = denom_model_formula,
 		num_model_formula = num_model_formula,
@@ -133,11 +133,7 @@ do_one_bootstrap <- function(
 		propensity_output = propensity_output
 	)
 
-  # we need to loop code between <<<<<< and >>>>> 
-  # setting effect_hetero_variable to "none" and then to whatever
-  # the user inputs for effect_hetero_variables
-  # <<<<<<<<<<
-	msm_fits_tb <- sapply(msm_formulas_tb, 
+  msm_fits_tb <- sapply(msm_formulas_tb, 
 		FUN = fit_msm,
 		cloned_data_set = cloned_data_sets$tb, 
 		return_msm_model = TRUE,
@@ -173,7 +169,6 @@ do_one_bootstrap <- function(
 		SIMPLIFY = FALSE,
 		USE.NAMES = TRUE
 	)
-	# >>>>>>>>>>>>
 	# !!!!!!! replace msm_models with NULL to avoid ballooning object sizes !!!!!!
 
 	out <- list(
@@ -191,11 +186,11 @@ do_one_bootstrap <- function(
 
 run_bootstrap <- function(
   nboot = 1e3,
-  weekly_records_data,
-  grace_pd_wks,
-  denom_model_formula,
-  num_model_formula,
-  right_cens_model_formula,   
+  weekly_records_data = weekly_records_data,
+  grace_pd_wks = 8,
+  denom_model_formula = "1",
+  num_model_formula = denom_model_formula,
+  right_cens_model_formula = "1",   
   msm_formulas_tb = "splines::ns(wk, 3) + z",
   msm_formulas_death = "splines::ns(wk, 3) + z",
   msm_formulas_death_for_tb = msm_formulas_death,
@@ -264,19 +259,29 @@ get_fn_by_wk_boot_result <- function(
   out <- vector(mode = "list", length = n_models)
   
   for(i in seq_len(n_models)){
+    
     if(fn_by_wk_name == "cf_init_dist"){
       # this should always be length 1
-      all_fn_by_wk_df_list <- list(lapply(all_fn_by_wk_list, "[[", i))
+      n_subgrp <- 1
     }else{
       # if effect hetero this will have length > 1
       # else length == 1
-      all_fn_by_wk_df_list <- lapply(all_fn_by_wk_list, function(x){
-        x[[i]] 
-      })
+      n_subgrp <- length(all_fn_by_wk_list[[1]][[i]])
+      names(out)[i] <- paste0(names(all_fn_by_wk_list[[1]][i]))
     }
-    out_j <- vector(mode = "list", length = length(all_fn_by_wk_df_list))
-    for(j in 1:length(all_fn_by_wk_df_list)){
-      all_fn_by_wk_df <- all_fn_by_wk_df_list[[j]]
+    
+    out_j <- vector(mode = "list", length = n_subgrp)
+    for(j in seq_len(n_subgrp)){
+      
+      if(fn_by_wk_name == "cf_init_dist"){
+        all_fn_by_wk_df_list <- list(lapply(all_fn_by_wk_list, "[[", i))
+        all_fn_by_wk_df <- all_fn_by_wk_df_list[[j]]
+      }else{
+        all_fn_by_wk_df <- lapply(all_fn_by_wk_list, function(x){
+          x[[i]][[j]]
+        })
+      }
+    
     
     	if(!is.null(subset_idx)){
     		all_fn_by_wk_df <- lapply(
@@ -310,6 +315,11 @@ get_fn_by_wk_boot_result <- function(
     		fn_by_wk_ci_matrix
     	)
     	out_j[[j]] <- fn_by_wk_ci
+    	if(n_subgrp == 1){
+    	  names(out_j)[j] <- paste0(names(all_fn_by_wk_list[[1]][i]))
+    	}else{
+    	  names(out_j)[j] <- paste0(names(all_fn_by_wk_list[[1]][[i]][j]))
+    	}
     }
     out[[i]] <- out_j
   }
@@ -324,11 +334,14 @@ get_msm_boot_result <- function(
 		bootstrap_results[msm_fits_name,], 
 		function(y){
 		  unlist(lapply(y, function(yy){
-		    yy$msm_coef['z']
+		    if(length(yy$msm_coef) == 5){ # this is 5 because models without effect heterogeneity will have 5 terms (intercept, 3 wk splines, z)
+		      yy$msm_coef['z']
+		    }else{
+		      c(yy$msm_coef['z'], (yy$msm_coef['z'] + yy$msm_coef[str_detect(names(yy$msm_coef), 'z:')]))
+		    }
 		  }))
-			# y$`splines::ns(wk, 3) + z`$msm_coef['z'] ### good?
 		}, 
-		simplify = TRUE, USE.NAMES = TRUE
+		simplify = FALSE, USE.NAMES = TRUE
 	)
 	
 	all_z_coef_matrix <- Reduce(rbind, all_z_coef)
@@ -341,6 +354,6 @@ get_msm_boot_result <- function(
 	)
 	row.names(msm_fits_ci) <- NULL
 	msm_fits_ci_split <- split(msm_fits_ci, seq_len(dim(msm_fits_ci)[1]))
-	names(msm_fits_ci_split) <- names(bootstrap_results[,1][[msm_fits_name]])
+	names(msm_fits_ci_split) <- names(all_z_coef[[1]])
 	return(msm_fits_ci_split)
 }

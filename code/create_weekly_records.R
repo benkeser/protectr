@@ -171,25 +171,31 @@ create_weekly_record_data <- function(
 
 
       enroll_date_this_id <- dat_id[1, enroll_date]
+      weekly_records[, enroll_date := enroll_date_this_id]
 
       tpt_start_date_this_id <- dat_id[1, tpt_start_date]
       tpt_start_wk_this_id <- get_week_of_event(tpt_start_date_this_id, enroll_date_this_id)
+      weekly_records[, tpt_start_date := tpt_start_date_this_id]
       weekly_records[, tpt_start_wk := tpt_start_wk_this_id]
 
       tb_diagnosis_date_this_id <- dat_id[1, tb_diagnosis_date]
       tb_wk_this_id <- get_week_of_event(tb_diagnosis_date_this_id, enroll_date_this_id)
+      weekly_records[, tb_diagnosis_date := tb_diagnosis_date_this_id]
       weekly_records[, tb_wk := tb_wk_this_id]
 
       death_date_this_id <- dat_id[1, death_date]
       death_wk_this_id <- get_week_of_event(death_date_this_id, enroll_date_this_id)
+      weekly_records[, death_date := death_date_this_id]
       weekly_records[, death_wk := death_wk_this_id]
 
       right_cens_date_this_id <- dat_id[1, right_cens_date_tb]
       right_cens_wk_this_id <- get_week_of_event(right_cens_date_this_id, enroll_date_this_id)
+      weekly_records[, right_cens_date := right_cens_date_this_id]
       weekly_records[, right_cens_wk_tb := right_cens_wk_this_id]
       
       last_visit_date_this_id <- dat_id[1, last_visit_date]
       last_visit_wk_this_id <- get_week_of_event(last_visit_date_this_id, enroll_date_this_id)
+      weekly_records[, last_visit_date := last_visit_date_this_id]
       weekly_records[, last_visit_wk := last_visit_wk_this_id]
 
       admin_cens_date_this_id <- dat_id[1, admin_cens_date]

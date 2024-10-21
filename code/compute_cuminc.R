@@ -97,6 +97,11 @@ compute_cuminc <- function(
 			msm_fit_death = msm_fit_death,
 			msm_fit_death_for_tb = msm_fit_death_for_tb)
 		)
+		if(!is.null(msm_fit_tb)){
+		  names(out) <- paste0(msm_fit_tb$msm_model$formula[3])
+		}else{
+		  names(out) <- paste0(msm_fit_mdr_tb$msm_model$formula[3])
+		}
 	}else{
 		out <- sapply(msm_fit_tb$effect_hetero_variable_vals, function(val, ...){
 			df_z1 <- data.frame(z = 1, wk = seq_len(max_wk), tmp = val)
@@ -109,6 +114,9 @@ compute_cuminc <- function(
 			msm_fit_death = msm_fit_death,
 			msm_fit_death_for_tb = msm_fit_death_for_tb,
 	  	simplify = FALSE)
+		for(i in seq_len(length(msm_fit_tb$effect_hetero_variable_vals))){
+		  names(out)[i] <- paste0("splines::ns(wk, 3) + z", "*(", msm_fit_tb$effect_hetero_variable, "=", msm_fit_tb$effect_hetero_variable_vals[i], ")")
+		}
 	}
 	return(out)
 }
