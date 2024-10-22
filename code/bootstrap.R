@@ -170,6 +170,15 @@ do_one_bootstrap <- function(
 		USE.NAMES = TRUE
 	)
 	# !!!!!!! replace msm_models with NULL to avoid ballooning object sizes !!!!!!
+	for(i in seq_len(length(msm_fits_tb))){
+	  msm_fits_tb[[i]]$msm_model <- NULL
+	}
+	for(i in seq_len(length(msm_fits_death))){
+	  msm_fits_tb[[i]]$msm_model <- NULL
+	}
+	for(i in seq_len(length(msm_fits_death_for_tb))){
+	  msm_fits_tb[[i]]$msm_model <- NULL
+	}
 
 	out <- list(
 		cf_init_dist = list(cf_init_dist),
@@ -231,6 +240,11 @@ get_bootstrap_ci <- function(
 	msm_fits_death_ci <- get_msm_boot_result(
 		bootstrap_results, "msm_fits_death"	                                      
 	)
+	
+	# bootstrap results for msm_fits_death_for_tb
+	msm_fits_death_for_tb_ci <- get_msm_boot_result(
+	  bootstrap_results, "msm_fits_death_for_tb"	                                      
+	)
 
 	# bootstrap results for cuminc
 	n_models <- length(bootstrap_results["cuminc", 1])
@@ -243,6 +257,7 @@ get_bootstrap_ci <- function(
 		cf_init_dist_ci = cf_init_dist_ci,
 		msm_fits_tb_ci = msm_fits_tb_ci,
 		msm_fits_death_ci = msm_fits_death_ci,
+		msm_fits_death_for_tb_ci = msm_fits_death_for_tb_ci,
 		cuminc_ci = cuminc_ci
 	)
 	

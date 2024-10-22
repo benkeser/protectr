@@ -3,7 +3,7 @@ fit_msm <- function(
 	msm_formula = "splines::ns(wk, 3) + z",
 	outcome = "dN", # could add dN_mdr_tb, dN_not_mdr_tb
 	gee = FALSE,
-	return_msm_model = FALSE,
+	return_msm_model = TRUE,
 	return_msm_vcov = FALSE,
 	...
 ){
@@ -33,7 +33,7 @@ fit_msm <- function(
 			weights = wt_k,
 			corstr = "independence"
 		)
-		# TODO: strip model?
+		msm_fit <- strip_glm(msm_fit)
 	}
 
 	msm_coef <- msm_fit$coefficients

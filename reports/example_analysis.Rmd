@@ -411,6 +411,7 @@ The output of this function is a named `list` with elements:
 The final set of outputs can be combined into a `list` named `results` that combines the `propensity_output`, `cf_init_dist`, `msm_fit`, `cuminc`, `bootstrap_results`, and `bootstrap_ci` objects.
 
 ```{r}
+propensity_output$weekly_records_data <- NULL
 models <- mget(ls(pattern = paste0("^", "msm")))
 cumincs <- mget(ls(pattern = paste0("^", "cuminc")))
 results <- mget(c(ls(pattern = paste0("^", "propensity")),
