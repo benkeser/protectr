@@ -174,10 +174,10 @@ do_one_bootstrap <- function(
 	  msm_fits_tb[[i]]$msm_model <- NULL
 	}
 	for(i in seq_len(length(msm_fits_death))){
-	  msm_fits_tb[[i]]$msm_model <- NULL
+	  msm_fits_death[[i]]$msm_model <- NULL
 	}
 	for(i in seq_len(length(msm_fits_death_for_tb))){
-	  msm_fits_tb[[i]]$msm_model <- NULL
+	  msm_fits_death_for_tb[[i]]$msm_model <- NULL
 	}
 
 	out <- list(
