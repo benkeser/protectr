@@ -460,10 +460,6 @@ for(i in seq_len(length(models))){
   models[[i]][["msm_model"]]$qr <- NULL
 }
 
-for(i in seq_len(length(R_results_2[["models"]]))){
-  R_results_2[["models"]][[i]][["msm_model"]]$qr <- NULL
-}
-
 # Combine cumulative incidences
 cumincs <- mget(ls(pattern = paste0("^", "cuminc")))
 
