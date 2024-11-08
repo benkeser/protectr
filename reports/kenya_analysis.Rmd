@@ -2,11 +2,11 @@
 title: Kenya PROTECT analysis
 output: html_document
 params:
-	exclude_weeks: 4
-	grace_pd_wks: 12
-	admin_cens_wk: 104
-	n_boot: 1000
-	run_bootstrap: TRUE
+  exclude_weeks: 4
+  grace_pd_wks: 12
+  admin_cens_wk: 104
+  n_boot: 1000
+  run_bootstrap: TRUE
 ---
 
 ```{r setup, include = FALSE}
