@@ -1,0 +1,332 @@
+---
+title: Kenya PROTECT analysis
+output: html_document
+params:
+	exclude_weeks: 4
+	grace_pd_wks: 12
+	admin_cens_wk: 104
+	n_boot: 1000
+	run_bootstrap: TRUE
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      error = TRUE,
+                      message = FALSE,
+                      warning = FALSE)
+library(fastverse)
+library(tidyverse)
+library(future.apply)
+library(progressr)
+set.seed(404)
+
+ncores <- parallel::detectCores()
+future::plan('multisession', workers = ncores-1)
+here::i_am("reports/kenya_analysis.Rmd")
+```
+
+# Loading data
+
+First, we read in the weekly records data that was created previously.
+
+```{r data-load}
+weekly_records_data <- fread(here::here("data/weekly_records_data.csv"))
+```
+
+Next, we exclude early cases of TB. Here, we are using the `exclude_weeks` variable from `params` specified in the header. This value can be changed in the header of the R Markdown document to run a sensitivity analysis with a different window for TB case exclusion. The default value is 4 weeks.
+
+```{r exclude-early-tb}
+early_tb <- weekly_records_data$tb_wk != 99999 & weekly_records_data$tb_wk <= params$exclude_week
+weekly_records_data_exclude <- weekly_records_data[!early_tb,]
+```
+
+Next, we remove rows from the weekly records data that are after the end of our defined follow-up period. This value can also be changed in the header of the R Markdown document and defaults to 104 weeks (i.e., 2 years).
+
+```{r remove-weeks-after-admin-censoring}
+weekly_records_data_exclude <- weekly_records_data_exclude[
+  wk <= params$admin_cens_wk, 
+]
+weekly_records_data_exclude$admin_cens_wk <- params$admin_cens_wk
+```
+
+Next, we need to merge in the enrollment year to the weekly records data.
+
+```{r mege-enroll-year}
+enroll_year <- readRDS(
+  here::here("../enroll_year_only.rds")
+)
+enroll_year <- as.data.table(enroll_year)
+weekly_records_data_exclude <- merge(weekly_records_data_exclude, enroll_year, by = "id")
+```
+
+After this step, we have a data set that is ready for analysis.
+
+# Fitting propensity models
+
+The code chunk below defines the set of baseline covariates that are used in the analysis, as well as the formulas used to estimate the propensity score models.
+
+```{r define-model-formulas}
+baseline_covariates <- c(
+  "martial_status", "gender", "age", "religion", "education",
+  "known_tb_prior_to_enroll", "known_tpt_prior_to_enroll",
+  "who_stage", "year"
+)
+cat(
+	"Baseline covariates used in analysis: ", 
+	paste0(baseline_covariates, sep = ", ")
+)
+
+denom_model_formula <- paste0(
+  paste0(baseline_covariates, collapse = " + "), " + ",
+  "tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k*tb_symptoms_visit_k)", "+",
+  "art_init + I(art_init*art_adherence_visit_k)", "+",
+  "have_cd4 + I(have_cd4*cd4_count)", "+",
+  "I((wk < 8)*(year<2020)*number_encounters_last_8_weeks)", "+",
+  "splines::ns(wk, df = 3)"
+)
+cat(
+	"Model formula used for denominator propensity model: ",
+	denom_model_formula
+)
+
+num_model_formula <- paste0(
+  paste0(baseline_covariates, collapse = " + "), " + ",
+  "tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k*tb_symptoms_visit_k)", "+",
+  "art_init + I(art_init*art_adherence_visit_k)", "+",
+  "have_cd4 + I(have_cd4*cd4_count)", "+",
+  "I((wk < 8)*(year<2020)*number_encounters_last_8_weeks)", "+",
+  "wk + I(wk^2)"
+)
+cat(
+	"Model formula used for numerator propensity model: ",
+	num_model_formula
+)
+
+right_cens_model_formula <- paste0(
+  "splines::ns(wk, df = 3) + ",
+  paste0(baseline_covariates, collapse = " + "), " + ",
+  "tpt_init + ",
+  "art_init + I(art_init*art_adherence_visit_k)"
+)
+cat(
+	"Model formula used for right censoring model: ",
+	right_cens_model_formula
+)
+```
+
+Now we are ready to fit the propensity score models.
+
+```{r fit-propensity-models}
+source(here::here("code/fit_propensity_models.R"))
+
+propensity_output <- fit_propensity_models(
+  weekly_records_data = weekly_records_data_exclude,
+  grace_pd_wks = params$grace_pd_wks,
+  denom_model_formula = denom_model_formula,
+  num_model_formula = num_model_formula,
+  right_cens_model_formula = right_cens_model_formula
+)
+```
+
+# Creating cloned data
+
+Next we created the "cloned" data set.
+
+```{r, create-cloned-data}
+source(here::here("code/create_cloned_data_set.R"))
+
+cloned_data_sets <- create_cloned_data_set(
+  propensity_output
+)
+```
+
+# Fitting MSMs
+
+In the next code chunk, we define the model formulas that are used to fit the MSMs.
+
+```{r, define-msm-formulas}
+msm_formula <- "z + splines::ns(wk, knots = c(4, 26, 52, 78))"
+```
+
+Now we fit MSMs for the endpoints of interest.
+
+```{r, fit-tb-msm}
+source(here::here("code/fit_msm.R"))
+
+msm_fit_tb <- fit_msm(
+  cloned_data_set = cloned_data_sets$tb,
+  msm_formula = msm_formula,
+  return_msm_model = TRUE,
+  return_msm_vcov = FALSE,
+  gee = FALSE
+)
+
+cat(
+	"Coefficients for the TB model: ",
+	msm_fit_tb$msm_coef
+)
+
+msm_fit_death <- fit_msm(
+  cloned_data_set = cloned_data_sets$death,
+  msm_formula = msm_formula,
+  return_msm_model = TRUE,
+  return_msm_vcov = TRUE,
+  gee = TRUE  
+)
+
+cat(
+	"Coefficients for the death model: ",
+	msm_fit_death$msm_coef
+)
+
+msm_fit_death_for_tb <- fit_msm(
+  cloned_data_set = cloned_data_sets$death_for_tb,
+  msm_formula = msm_formula,
+  return_msm_model = TRUE
+)
+
+```
+
+
+# Fitting MSMs to assess effect heterogeneity
+
+It is also of interest to evaluate the possible presence of effect heterogeneity. Below we define a model formula used to assess effect heterogeneity with WHO stage at enrollment.
+
+```{r, msm-formula-for-effect-hetero}
+msm_formula_hetero <- "splines::ns(wk, knots = c(4, 26, 52, 78)) + z*factor(who_stage)"
+```
+
+```{r, msms-for-effect-hetero}
+msm_fit_tb_hetero <- fit_msm(
+	cloned_data_set = cloned_data_sets$tb, 
+	msm_formula = msm_formula_hetero,
+	return_msm_model = TRUE,
+	gee = FALSE,
+	return_msm_vcov = FALSE
+)
+
+cat(
+	"Coefficients for the TB effect heterogeneity model: ",
+	msm_fit_tb_hetero$msm_coef
+)
+
+msm_fit_death_hetero <- fit_msm(
+	cloned_data_set = cloned_data_sets$death, 
+	msm_formula = msm_formula_hetero,
+	return_msm_model = TRUE,
+	gee = FALSE,
+	return_msm_vcov = FALSE
+)
+
+cat(
+	"Coefficients for the death effect heterogeneity model: ",
+	msm_fit_death_hetero$msm_coef
+)
+
+msm_fit_death_for_tb_hetero <- fit_msm(
+	cloned_data_set = cloned_data_sets$death_for_tb, 
+	msm_formula = msm_formula_hetero,
+	return_msm_model = TRUE,
+	gee = FALSE,
+	return_msm_vcov = FALSE
+)
+```
+
+# Summarizing outputs of MSMs
+
+The following code conversts the MSM output into estimates of cumulative incidence.
+
+```{r summarize-cum-inc}
+source(here::here("code/primary_analysis/compute_cuminc.R"))
+
+cuminc <- compute_cuminc(
+	msm_fit_tb = msm_fit_tb,
+	msm_fit_death = msm_fit_death,
+	msm_fit_death_for_tb = msm_fit_death_for_tb,
+	max_wk = params$admin_cens_wk
+)
+
+cuminc_hetero <- compute_cuminc(
+	msm_fit_tb = msm_fit_tb_hetero,
+	msm_fit_death = msm_fit_death_hetero,
+	msm_fit_death_for_tb = msm_fit_death_for_tb_hetero,
+	max_wk = params$admin_cens_wk
+)
+```
+
+# Bootstrapping
+
+Now we are ready to run the bootstrap code to get confidence intervals for all results. This code will take quite some time to run
+
+```{r fit-bootstrap}
+source(here::here("code/primary_analysis/bootstrap.R"))
+
+bootstrap_results <- run_bootstrap(
+	nboot = params$n_boot,
+	# ensure all these inputs are same as above!
+  weekly_records_data = weekly_records_data_exclude,
+  grace_pd_wks = params$grace_pd_wks,
+  denom_model_formula = denom_model_formula,
+  num_model_formula = num_model_formula,
+  right_cens_model_formula = right_cens_model_formula,
+  admin_cens_wks = params$admin_cens_wk, 
+  # input all msm formulas that are of interest
+  msm_formulas_tb = c(msm_formula, msm_formula_hetero),
+  msm_formulas_death = c(msm_formula, msm_formula_hetero),
+  msm_formulas_death_for_tb = c(msm_formula, msm_formula_hetero)
+)
+```
+
+After the bootstrap process has completed, we save the results to ensure results are not lost. E.g.,
+
+```{r save-bootstrap}
+saveRDS(
+	bootstrap_results,
+	here::here("data/bootstrap_results.rds")
+)
+```
+
+Finally, confidence intervals and other relevant information for inference can be obtained using the `get_bootstrap_ci` function.
+
+```{r bootstrap_ci}
+bootstrap_ci <- get_bootstrap_ci(bootstrap_results)
+```
+
+# Saving all results
+
+The final set of outputs can be combined into a `list` named `results` that combines the `propensity_output`, `cf_init_dist`, `msm_fit`, `cuminc`, `bootstrap_results`, and `bootstrap_ci` objects. The code below tries to reduce the size of these objects as much as possible prior to saving.
+
+```{r combine_results}
+# Null out parts of propensity_output no longer needed
+propensity_output$weekly_records_data <- NULL
+propensity_output[["models"]][["denom_model"]]$qr <- NULL
+propensity_output[["models"]][["num_model"]]$qr <- NULL
+propensity_output[["models"]][["cens_model_tb"]]$qr <- NULL
+propensity_output[["models"]][["cens_model_death"]]$qr <- NULL
+
+# Combine MSMs and null out parts no longer needed
+models <- mget(ls(pattern = paste0("^", "msm")))
+for(i in seq_len(length(models))){
+  models[[i]][["msm_model"]]$qr <- NULL
+}
+
+# Combine cumulative incidences
+cumincs <- mget(ls(pattern = paste0("^", "cuminc")))
+
+# Combine all results
+results <- mget(c(ls(pattern = paste0("^", "propensity")),
+                  ls(pattern = paste0("^", "cf_init")),
+                  ls(pattern = paste0("^", "models")),
+                  ls(pattern = paste0("^", "cumincs")),
+                  ls(pattern = paste0("^", "bootstrap_r")),
+                  ls(pattern = paste0("^", "bootstrap_ci"))))
+```
+
+The results can be saved in `.rds` format, as shown below.
+
+```{r save_results}
+saveRDS(
+	results,
+	here::here("data/R_results_2.rds")
+)
+```
