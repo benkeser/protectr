@@ -21,7 +21,8 @@ library(progressr)
 set.seed(404)
 
 ncores <- parallel::detectCores()
-future::plan('multisession', workers = ncores-1)
+ncores_for_future <- ncores - 1
+future::plan('multisession', workers = ncores_for_future)
 here::i_am("reports/kenya_analysis.Rmd")
 ```
 
@@ -119,13 +120,15 @@ Now we are ready to fit the propensity score models.
 ```{r fit-propensity-models}
 source(here::here("code/fit_propensity_models.R"))
 
-propensity_output <- fit_propensity_models(
-  weekly_records_data = weekly_records_data_exclude,
-  grace_pd_wks = params$grace_pd_wks,
-  denom_model_formula = denom_model_formula,
-  num_model_formula = num_model_formula,
-  right_cens_model_formula = right_cens_model_formula
-)
+propensity_model_time <- system.time({
+	propensity_output <- fit_propensity_models(
+	  weekly_records_data = weekly_records_data_exclude,
+	  grace_pd_wks = params$grace_pd_wks,
+	  denom_model_formula = denom_model_formula,
+	  num_model_formula = num_model_formula,
+	  right_cens_model_formula = right_cens_model_formula
+	)
+})
 ```
 
 # Creating cloned data
@@ -135,9 +138,11 @@ Next we created the "cloned" data set.
 ```{r, create-cloned-data}
 source(here::here("code/create_cloned_data_set.R"))
 
-cloned_data_sets <- create_cloned_data_set(
-  propensity_output
-)
+cloned_data_set_time <- system.time({
+	cloned_data_sets <- create_cloned_data_set(
+	  propensity_output
+	)
+})
 ```
 
 # Fitting MSMs
@@ -153,37 +158,39 @@ Now we fit MSMs for the endpoints of interest.
 ```{r, fit-tb-msm}
 source(here::here("code/fit_msm.R"))
 
-msm_fit_tb <- fit_msm(
-  cloned_data_set = cloned_data_sets$tb,
-  msm_formula = msm_formula,
-  return_msm_model = TRUE,
-  return_msm_vcov = FALSE,
-  gee = FALSE
-)
+msm_fit_time <- system.time({
+	msm_fit_tb <- fit_msm(
+	  cloned_data_set = cloned_data_sets$tb,
+	  msm_formula = msm_formula,
+	  return_msm_model = TRUE,
+	  return_msm_vcov = FALSE,
+	  gee = FALSE
+	)
 
-cat(
-	"Coefficients for the TB model: ",
-	msm_fit_tb$msm_coef
-)
+	cat(
+		"Coefficients for the TB model: ",
+		msm_fit_tb$msm_coef
+	)
 
-msm_fit_death <- fit_msm(
-  cloned_data_set = cloned_data_sets$death,
-  msm_formula = msm_formula,
-  return_msm_model = TRUE,
-  return_msm_vcov = TRUE,
-  gee = TRUE  
-)
+	msm_fit_death <- fit_msm(
+	  cloned_data_set = cloned_data_sets$death,
+	  msm_formula = msm_formula,
+	  return_msm_model = TRUE,
+	  return_msm_vcov = TRUE,
+	  gee = TRUE  
+	)
 
-cat(
-	"Coefficients for the death model: ",
-	msm_fit_death$msm_coef
-)
+	cat(
+		"Coefficients for the death model: ",
+		msm_fit_death$msm_coef
+	)
 
-msm_fit_death_for_tb <- fit_msm(
-  cloned_data_set = cloned_data_sets$death_for_tb,
-  msm_formula = msm_formula,
-  return_msm_model = TRUE
-)
+	msm_fit_death_for_tb <- fit_msm(
+	  cloned_data_set = cloned_data_sets$death_for_tb,
+	  msm_formula = msm_formula,
+	  return_msm_model = TRUE
+	)
+})
 
 ```
 
@@ -197,39 +204,41 @@ msm_formula_hetero <- "splines::ns(wk, knots = c(4, 26, 52, 78)) + z*factor(who_
 ```
 
 ```{r, msms-for-effect-hetero}
-msm_fit_tb_hetero <- fit_msm(
-	cloned_data_set = cloned_data_sets$tb, 
-	msm_formula = msm_formula_hetero,
-	return_msm_model = TRUE,
-	gee = FALSE,
-	return_msm_vcov = FALSE
-)
+msm_fit_hetero_time <- system.time({
+	msm_fit_tb_hetero <- fit_msm(
+		cloned_data_set = cloned_data_sets$tb, 
+		msm_formula = msm_formula_hetero,
+		return_msm_model = TRUE,
+		gee = FALSE,
+		return_msm_vcov = FALSE
+	)
 
-cat(
-	"Coefficients for the TB effect heterogeneity model: ",
-	msm_fit_tb_hetero$msm_coef
-)
+	cat(
+		"Coefficients for the TB effect heterogeneity model: ",
+		msm_fit_tb_hetero$msm_coef
+	)
 
-msm_fit_death_hetero <- fit_msm(
-	cloned_data_set = cloned_data_sets$death, 
-	msm_formula = msm_formula_hetero,
-	return_msm_model = TRUE,
-	gee = FALSE,
-	return_msm_vcov = FALSE
-)
+	msm_fit_death_hetero <- fit_msm(
+		cloned_data_set = cloned_data_sets$death, 
+		msm_formula = msm_formula_hetero,
+		return_msm_model = TRUE,
+		gee = FALSE,
+		return_msm_vcov = FALSE
+	)
 
-cat(
-	"Coefficients for the death effect heterogeneity model: ",
-	msm_fit_death_hetero$msm_coef
-)
+	cat(
+		"Coefficients for the death effect heterogeneity model: ",
+		msm_fit_death_hetero$msm_coef
+	)
 
-msm_fit_death_for_tb_hetero <- fit_msm(
-	cloned_data_set = cloned_data_sets$death_for_tb, 
-	msm_formula = msm_formula_hetero,
-	return_msm_model = TRUE,
-	gee = FALSE,
-	return_msm_vcov = FALSE
-)
+	msm_fit_death_for_tb_hetero <- fit_msm(
+		cloned_data_set = cloned_data_sets$death_for_tb, 
+		msm_formula = msm_formula_hetero,
+		return_msm_model = TRUE,
+		gee = FALSE,
+		return_msm_vcov = FALSE
+	)
+})
 ```
 
 # Summarizing outputs of MSMs
@@ -239,26 +248,37 @@ The following code conversts the MSM output into estimates of cumulative inciden
 ```{r summarize-cum-inc}
 source(here::here("code/primary_analysis/compute_cuminc.R"))
 
-cuminc <- compute_cuminc(
-	msm_fit_tb = msm_fit_tb,
-	msm_fit_death = msm_fit_death,
-	msm_fit_death_for_tb = msm_fit_death_for_tb,
-	max_wk = params$admin_cens_wk
-)
+cuminc_time <- system.time({
+	cuminc <- compute_cuminc(
+		msm_fit_tb = msm_fit_tb,
+		msm_fit_death = msm_fit_death,
+		msm_fit_death_for_tb = msm_fit_death_for_tb,
+		max_wk = params$admin_cens_wk
+	)
 
-cuminc_hetero <- compute_cuminc(
-	msm_fit_tb = msm_fit_tb_hetero,
-	msm_fit_death = msm_fit_death_hetero,
-	msm_fit_death_for_tb = msm_fit_death_for_tb_hetero,
-	max_wk = params$admin_cens_wk
-)
+	cuminc_hetero <- compute_cuminc(
+		msm_fit_tb = msm_fit_tb_hetero,
+		msm_fit_death = msm_fit_death_hetero,
+		msm_fit_death_for_tb = msm_fit_death_for_tb_hetero,
+		max_wk = params$admin_cens_wk
+	)
+})
 ```
 
 # Bootstrapping
 
-Now we are ready to run the bootstrap code to get confidence intervals for all results. This code will take quite some time to run
+Now we are ready to run the bootstrap code to get confidence intervals for all results. This code will take quite some time to run. First, we can compute an estimated time.
 
-```{r fit-bootstrap}
+```{r estimate-time-bootstrap}
+time_one_run <- propensity_model_time['elapsed'] + cloned_data_set_time['elapsed'] + 
+	msm_fit_time['elapsed'] + msm_fit_hetero_time['elapsed'] + cuminc_time['elapsed']
+estimated_time <- (time_one_run * params$n_boot) / (ncores_for_future)
+cat(
+  "Estimated time to complete bootstrap: ", estimated_time
+)
+```
+
+```{r fit-bootstrap, eval = params$run_bootstrap}
 source(here::here("code/primary_analysis/bootstrap.R"))
 
 bootstrap_results <- run_bootstrap(
@@ -279,7 +299,7 @@ bootstrap_results <- run_bootstrap(
 
 After the bootstrap process has completed, we save the results to ensure results are not lost. E.g.,
 
-```{r save-bootstrap}
+```{r save-bootstrap, eval = params$run_bootstrap}
 saveRDS(
 	bootstrap_results,
 	here::here("data/bootstrap_results.rds")
@@ -288,7 +308,7 @@ saveRDS(
 
 Finally, confidence intervals and other relevant information for inference can be obtained using the `get_bootstrap_ci` function.
 
-```{r bootstrap_ci}
+```{r bootstrap_ci, eval = params$run_bootstrap}
 bootstrap_ci <- get_bootstrap_ci(bootstrap_results)
 ```
 
@@ -296,7 +316,7 @@ bootstrap_ci <- get_bootstrap_ci(bootstrap_results)
 
 The final set of outputs can be combined into a `list` named `results` that combines the `propensity_output`, `cf_init_dist`, `msm_fit`, `cuminc`, `bootstrap_results`, and `bootstrap_ci` objects. The code below tries to reduce the size of these objects as much as possible prior to saving.
 
-```{r combine_results}
+```{r combine_results, eval = params$run_bootstrap}
 # Null out parts of propensity_output no longer needed
 propensity_output$weekly_records_data <- NULL
 propensity_output[["models"]][["denom_model"]]$qr <- NULL
@@ -324,9 +344,9 @@ results <- mget(c(ls(pattern = paste0("^", "propensity")),
 
 The results can be saved in `.rds` format, as shown below.
 
-```{r save_results}
+```{r save_results, eval = params$run_bootstrap}
 saveRDS(
 	results,
-	here::here("data/R_results_2.rds")
+	here::here("data/kenya_results_for_sharing.rds")
 )
 ```
