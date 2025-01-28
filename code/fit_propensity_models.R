@@ -214,22 +214,20 @@ fit_propensity_models <- function(
 
 
 	# 3) Turn calculated columns into appropriate weights to be used in the MSM
-	wts_by_id <- future.apply::future_lapply(weekly_records_data[, unique(id)], function(this_id) {
-	  # subset to each id
-	  weekly_records_data_this_id <- weekly_records_data[id == this_id]
+	
+	# NEW split beforehand to use less memory (thanks gpt)
+	weekly_records_data_this_id <- split(weekly_records_data, weekly_records_data$id)
+	
+	wts_by_id <- future.apply::future_lapply(weekly_records_data_this_id, function(data_chunk) {
+	  # Weight calculations
+	  data_chunk[, wt_tpt_tb := cumprod(prob_wt_num_tpt_tb / (prob_wt_denom_tpt_tb * prob_wt_cens_tb))]
+	  data_chunk[, wt_tpt_death := cumprod(prob_wt_num_tpt_death / (prob_wt_denom_tpt_death * prob_wt_cens_death))]
+	  data_chunk[, wt_cntrl_tb := cumprod(1 / (prob_wt_denom_cntrl_tb * prob_wt_cens_tb))]
+	  data_chunk[, wt_cntrl_death := cumprod(1 / (prob_wt_denom_cntrl_death * prob_wt_cens_death))]
 	  
-	  # create weight for TPT condition
-	  weekly_records_data_this_id[, wt_tpt_tb := cumprod(prob_wt_num_tpt_tb / (prob_wt_denom_tpt_tb * prob_wt_cens_tb))]
-	  weekly_records_data_this_id[, wt_tpt_death := cumprod(prob_wt_num_tpt_death / (prob_wt_denom_tpt_death * prob_wt_cens_death))]
-	  
-	  # create weight for control condition
-	  weekly_records_data_this_id[, wt_cntrl_tb    := cumprod(1 / (prob_wt_denom_cntrl_tb * prob_wt_cens_tb))]
-	  weekly_records_data_this_id[, wt_cntrl_death := cumprod(1 / (prob_wt_denom_cntrl_death * prob_wt_cens_death))]
-	  
-	  return(weekly_records_data_this_id)
+	  return(data_chunk)
 	})
-
-	# merge weekly records across all study units
+	
 	weekly_records_data_wts <- rbindlist(wts_by_id)
 
 	out <- list()

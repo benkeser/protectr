@@ -44,9 +44,9 @@ config <- config::get(file = "config.yml", config = setting)
 # 1. Create or load data --------------------------------------------------------------------
 
 #if data/weekly_records_data_SETTING.csv exists, load; otherwise, make weekly records data
-if(file.exists(here::here(paste0("data/weekly_records_data_", setting, ".rds")))){
+if(file.exists(here::here(paste0("data/", setting, "_weekly_records_data.rds")))){
     weekly_records_data <- setDT(readRDS(
-        here::here(paste0("data/weekly_records_data_", setting, ".rds"))
+      here::here(paste0("data/", setting, "_weekly_records_data.rds"))
     ))
 } else{
   # Read in raw data
@@ -73,12 +73,17 @@ if(file.exists(here::here(paste0("data/weekly_records_data_", setting, ".rds")))
 # (3) shortening the administrative censoring follow-up period
 
 if(!is.na(config$exclusion_period)){
+  
+  # QUESTION - tb_diagnosis_date seems to be missing from haiti but it's in uganda and zimbabwe
+  # is it supposed to be in all files? could it be named something else
     weekly_records_data_exclude <- weekly_records_data[
         is.na(tb_diagnosis_date) | (tb_diagnosis_date - enroll_date > config$exclusion_period)
     ]
 }
 
 if(!is.na(config$exclusion_date)){
+  
+  # QUESTION same as above with exclusion date haiti
     exclusion_date <- as.Date(config$exclusion_date)
     weekly_records_data_exclude <- weekly_records_data[
 	    enroll_date > exclusion_date
@@ -91,7 +96,7 @@ if(!is.na(config$new_admin_cens_wk)){
         wk < config$new_admin_cens_wk
     ]
     # confirm this is correct
-    weekly_records_data_exclude$admin_cens_wk <- new_admin_cens_wk
+    weekly_records_data_exclude$admin_cens_wk <- config$new_admin_cens_wk
 }
 
 # also example in Kenya code using exclude_weeks?? 
