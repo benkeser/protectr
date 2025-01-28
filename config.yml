@@ -27,8 +27,18 @@ haiti:
   weekly_records:
     data_name: "haiti_dat.RDS"
     baseline_covariates:
+      - "facility"
+      - "city_facility"
+      - "district_facility"
+      - "district_patient"
+      - "city_patient"
       - "sex"
-      - "TB_Status_Enr_HIV"
+      - "birth_date"
+      - "who_stage_baseline"
+      - "pregnant"
+      - "viral_load_date"
+      - "viral_load"
+      - "who_stage_visit"
     k: 3
     admin_cens_wks: 104
   country: "Haiti"

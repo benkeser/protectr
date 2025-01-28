@@ -49,16 +49,20 @@ if(file.exists(here::here(paste0("data/weekly_records_data_", setting, ".rds")))
         here::here(paste0("data/weekly_records_data_", setting, ".rds"))
     ))
 } else{
-    weekly_records_data <- create_weekly_record_data(
-        dat = config$weekly_records$data_name,
-        baseline_covariates = config$weekly_records$baseline_covariates,
-        k = config$weekly_records$k,
-        admin_cens_wks = config$weekly_records$admin_cens_wks
-    )
+  # Read in raw data
+  dat <- readRDS(here::here(paste0("data/", config$weekly_records$data_name)))
+  
+  # Create weekly record data
+  weekly_records_data <- create_weekly_record_data(
+      dat = dat,
+      baseline_covariates = config$weekly_records$baseline_covariates,
+      k = config$weekly_records$k,
+      admin_cens_wks = config$weekly_records$admin_cens_wks
+  )
 
-    saveRDS(weekly_records_data, 
-        here::here(paste0("data/weekly_records_data_", setting, ".rds"))
-    )
+  saveRDS(weekly_records_data, 
+      here::here(paste0("data/weekly_records_data_", setting, ".rds"))
+  )
 }
 
 # 2. Subset data ----------------------------------------------------------------------------
