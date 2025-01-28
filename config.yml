@@ -27,9 +27,8 @@ haiti:
   weekly_records:
     data_name: "haiti_dat.RDS"
     baseline_covariates:
-      - "age"
       - "sex"
-      - "temp3"
+      - "TB_Status_Enr_HIV"
     k: 3
     admin_cens_wks: 104
   country: "Haiti"

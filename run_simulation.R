@@ -8,6 +8,7 @@
 # 5. MSM models
 # 6. Bootstrap
 # --------------------------------------------------------------------------------
+.libPaths("~/Rlibs")
 
 here::i_am("run_simulation.R")
 
@@ -28,8 +29,12 @@ source(here::here("code/compute_cuminc.R"))
 source(here::here("code/bootstrap.R"))
 
 # Setup parallelization
-ncores <- parallel::detectCores()
-ncores_for_future <- ncores - 1
+
+# NOTE on the cluster this detects total cores on the node, not necessarily the ones that have been allocated by the scheduler
+# Opt for parallelly package instead, request appropriate number of nodes in bash script
+# ncores <- parallel::detectCores() 
+ncores <- parallelly::availableCores()
+ncores_for_future <- max(ncores - 1, 1) 
 future::plan('multisession', workers = ncores_for_future)
 
 # 0. Get settings from config file ----------------------------------------------------------
