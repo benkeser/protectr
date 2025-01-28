@@ -7,7 +7,32 @@ default:
       - "temp3"
     k: 3
     admin_cens_wks: 104
-  country: "Kenya"
+  country: "Haiti"
+  exclusion_period: 30
+  exclusion_date: "2016/01/01"
+  new_admin_cens_wk: 52
+  grace_pd_wks: 12
+  propensity_formulas:
+    num_and_denom_model_formula: "splines::ns(wk, 3) + art_init + I(have_cd4*cd4_count) + have_cd4 + birth_date"
+    right_cens_model_formula: "splines::ns(wk, 3) + art_init + I(have_cd4*cd4_count) + have_cd4 + birth_date"
+  msm_formulas:
+    - "splines::ns(wk, 3) + z"
+    - "splines::ns(wk, 3) + z*sex"
+  n_boot: 1000
+  run_bootstrap: TRUE
+
+# Add additional settings for different countries
+
+haiti:
+  weekly_records:
+    data_name: "haiti_dat.RDS"
+    baseline_covariates:
+      - "age"
+      - "sex"
+      - "temp3"
+    k: 3
+    admin_cens_wks: 104
+  country: "Haiti"
   exclusion_period: 30
   exclusion_date: "2016/01/01"
   new_admin_cens_wk: 52

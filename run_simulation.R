@@ -19,20 +19,18 @@ library(progressr)
 set.seed(404)
 
 # Source files needed
-source(here::here("code/primary_analysis/create_weekly_records.R"))
-source(here::here("code/primary_analysis/fit_propensity_models.R"))
-source(here::here("code/primary_analysis/compute_cf_init_dist.R"))
-source(here::here("code/primary_analysis/create_cloned_data_set.R"))
-source(here::here("code/primary_analysis/fit_msm.R"))
-source(here::here("code/primary_analysis/compute_cuminc.R"))
-source(here::here("code/primary_analysis/bootstrap.R"))
+source(here::here("code/create_weekly_records.R"))
+source(here::here("code/fit_propensity_models.R"))
+source(here::here("code/compute_cf_init_dist.R"))
+source(here::here("code/create_cloned_data_set.R"))
+source(here::here("code/fit_msm.R"))
+source(here::here("code/compute_cuminc.R"))
+source(here::here("code/bootstrap.R"))
 
 # Setup parallelization
 ncores <- parallel::detectCores()
 ncores_for_future <- ncores - 1
 future::plan('multisession', workers = ncores_for_future)
-
-#source(...)
 
 # 0. Get settings from config file ----------------------------------------------------------
 setting <- Sys.getenv("SETTING")
