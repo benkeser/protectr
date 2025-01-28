@@ -41,6 +41,11 @@ future::plan('multisession', workers = ncores_for_future)
 setting <- Sys.getenv("SETTING")
 config <- config::get(file = "config.yml", config = setting)
 
+# Create dir to save results if does not exist
+if(!file.exists(here::here(paste0("results/", setting)))){
+  dir.create(here::here(paste0("results/", setting)), recursive = TRUE)
+}
+
 # 1. Create or load data --------------------------------------------------------------------
 
 #if data/weekly_records_data_SETTING.csv exists, load; otherwise, make weekly records data
@@ -112,6 +117,9 @@ propensity_output <- fit_propensity_models(
 	right_cens_model_formula = config$propensity_formulas$right_cens_model_formula
 )
 
+# Save propensity output
+saveRDS(propensity_output, here::here(paste0("results/", setting, "/propensity_output_", setting, ".rds")))
+
 # i think we probably wanted to save/visualize some of these too?
 # TBD once seth shares script
 
@@ -166,11 +174,12 @@ for(i in 1:length(config$msm_formulas)){
 
 }
 
+# Save MSM output
+saveRDS(msm_formula_list, here::here(paste0("results/", setting, "/MSM_output_", setting, ".rds")))
+
 # visualize output with cuminc? or do later
 
 # 6. Bootstrap ----------------------------------------------------------------
-
-future::plan('multisession', workers = ncores - 1)
 
 bootstrap_results <- run_bootstrap(
   nboot = config$nboot,
@@ -188,7 +197,39 @@ bootstrap_results <- run_bootstrap(
 # save bootstrap results
 saveRDS(
 	bootstrap_results,
-	here::here(paste0("data/bootstrap_results_", setting, ".rds"))
+	saveRDS(msm_formula_list, here::here(paste0("results/", setting, "/bootstrap_output_", setting, ".rds")))
 )
 
-# Additional processing in example analysis?? then save?
+# Get bootstrap CI
+bootstrap_ci <- get_bootstrap_ci(bootstrap_results)
+
+# 7. Save results overall -----------------------------------------------------
+
+# Null out parts of propensity_output no longer needed
+propensity_output$weekly_records_data <- NULL
+propensity_output[["models"]][["denom_model"]]$qr <- NULL
+propensity_output[["models"]][["num_model"]]$qr <- NULL
+propensity_output[["models"]][["cens_model_tb"]]$qr <- NULL
+propensity_output[["models"]][["cens_model_death"]]$qr <- NULL
+
+# Combine MSMs and null out parts no longer needed
+models <- mget(ls(pattern = paste0("^", "msm")))
+for(i in seq_len(length(models))){
+  models[[i]][["msm_model"]]$qr <- NULL
+}
+
+# Combine cumulative incidences
+cumincs <- mget(ls(pattern = paste0("^", "cuminc")))
+
+# Combine all results
+results <- mget(c(ls(pattern = paste0("^", "propensity")),
+                  ls(pattern = paste0("^", "cf_init")),
+                  ls(pattern = paste0("^", "models")),
+                  ls(pattern = paste0("^", "cumincs")),
+                  ls(pattern = paste0("^", "bootstrap_r")),
+                  ls(pattern = paste0("^", "bootstrap_ci"))))
+
+saveRDS(
+  results,
+  here::here(paste0("results/", setting, "/overall_results_", setting, ".rds"))
+)
