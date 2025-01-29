@@ -4,4 +4,5 @@
 *.pdf
 sandbox/*.R
 sandbox/TODO
+data/
 reports/example_analysis.html
