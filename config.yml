@@ -4,7 +4,6 @@ default:
     baseline_covariates:
       - "age"
       - "sex"
-      - "temp3"
     k: 3
     admin_cens_wks: 104
   country: "Haiti"
@@ -21,7 +20,7 @@ default:
   n_boot: 1000
   run_bootstrap: TRUE
 
-# Add additional settings for different countries
+# ---------- Add additional settings for different countries ----------
 
 haiti:
   weekly_records:
@@ -54,3 +53,4 @@ haiti:
     - "splines::ns(wk, 3) + z*sex"
   n_boot: 1000
   run_bootstrap: TRUE
+  

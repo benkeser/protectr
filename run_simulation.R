@@ -8,6 +8,8 @@
 # 5. MSM models
 # 6. Bootstrap
 # --------------------------------------------------------------------------------
+
+# Path to installed packages on cluster
 .libPaths("~/Rlibs")
 
 here::i_am("run_simulation.R")
@@ -31,7 +33,7 @@ source(here::here("code/bootstrap.R"))
 # Setup parallelization
 
 # NOTE on the cluster this detects total cores on the node, not necessarily the ones that have been allocated by the scheduler
-# Opt for parallelly package instead, request appropriate number of nodes in bash script
+# Opt for parallelly package instead, request appropriate number of nodes allocated in bash script
 # ncores <- parallel::detectCores() 
 ncores <- parallelly::availableCores()
 ncores_for_future <- max(ncores - 1, 1) 
@@ -233,3 +235,5 @@ saveRDS(
   results,
   here::here(paste0("results/", setting, "/overall_results_", setting, ".rds"))
 )
+
+# If it's all saved here might not be a point in saving intermediate steps??
