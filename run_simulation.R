@@ -38,6 +38,7 @@ source(here::here("code/bootstrap.R"))
 ncores <- parallelly::availableCores()
 ncores_for_future <- max(ncores - 1, 1) 
 future::plan('multisession', workers = ncores_for_future)
+# maybe multicore?? check into this
 
 # 0. Get settings from config file ----------------------------------------------------------
 setting <- Sys.getenv("SETTING")
@@ -97,17 +98,14 @@ if(!is.na(config$exclusion_date)){
     ]
 }
 
-if(!is.na(config$new_admin_cens_wk)){
+if(!is.na(config$admin_cens_wk)){
     # should be <= admin_cens_wk used in call to create_weekly_records
     weekly_records_data_exclude <- weekly_records_data[
-        wk < config$new_admin_cens_wk
+        wk < config$admin_cens_wk
     ]
     # confirm this is correct
-    weekly_records_data_exclude$admin_cens_wk <- config$new_admin_cens_wk
+    weekly_records_data_exclude$admin_cens_wk <- config$admin_cens_wk
 }
-
-# also example in Kenya code using exclude_weeks?? 
-# not sure if that's doing the same thing with dif var names/if one of the files is more updated than the other
 
 # 3. Fitting propensity scores --------------------------------------------------------------
 
@@ -118,12 +116,6 @@ propensity_output <- fit_propensity_models(
 	num_model_formula = config$propensity_formulas$num_and_denom_model_formula,
 	right_cens_model_formula = config$propensity_formulas$right_cens_model_formula
 )
-
-# Save propensity output
-saveRDS(propensity_output, here::here(paste0("results/", setting, "/propensity_output_", setting, ".rds")))
-
-# i think we probably wanted to save/visualize some of these too?
-# TBD once seth shares script
 
 # 4. Cloning procedure -----------------------------------------------------------------------
 
@@ -176,11 +168,6 @@ for(i in 1:length(config$msm_formulas)){
 
 }
 
-# Save MSM output
-saveRDS(msm_formula_list, here::here(paste0("results/", setting, "/MSM_output_", setting, ".rds")))
-
-# visualize output with cuminc? or do later
-
 # 6. Bootstrap ----------------------------------------------------------------
 
 bootstrap_results <- run_bootstrap(
@@ -190,16 +177,10 @@ bootstrap_results <- run_bootstrap(
   denom_model_formula = config$propensity_formulas$num_and_denom_model_formula,
   num_model_formula = config$propensity_formulas$num_and_denom_model_formula,
   right_cens_model_formula = config$propensity_formulas$right_cens_model_formula,  
-  admin_cens_wks = config$new_admin_cens_wk * 2,  # Check if this is supposed to be double?? 
-  msm_formulas_tb = config$msm_formulas, # Check if these are allowed to vary or should all be same
+  admin_cens_wks = config$admin_cens_wk, 
+  msm_formulas_tb = config$msm_formulas, 
   msm_formulas_death = config$msm_formulas,
   msm_formulas_death_for_tb = config$msm_formulas
-)
-
-# save bootstrap results
-saveRDS(
-	bootstrap_results,
-	saveRDS(msm_formula_list, here::here(paste0("results/", setting, "/bootstrap_output_", setting, ".rds")))
 )
 
 # Get bootstrap CI
@@ -220,14 +201,9 @@ for(i in seq_len(length(models))){
   models[[i]][["msm_model"]]$qr <- NULL
 }
 
-# Combine cumulative incidences
-cumincs <- mget(ls(pattern = paste0("^", "cuminc")))
-
 # Combine all results
 results <- mget(c(ls(pattern = paste0("^", "propensity")),
-                  ls(pattern = paste0("^", "cf_init")),
-                  ls(pattern = paste0("^", "models")),
-                  ls(pattern = paste0("^", "cumincs")),
+                  ls(pattern = paste0("^", "models")),,
                   ls(pattern = paste0("^", "bootstrap_r")),
                   ls(pattern = paste0("^", "bootstrap_ci"))))
 
@@ -235,5 +211,3 @@ saveRDS(
   results,
   here::here(paste0("results/", setting, "/overall_results_", setting, ".rds"))
 )
-
-# If it's all saved here might not be a point in saving intermediate steps??

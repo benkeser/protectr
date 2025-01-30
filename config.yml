@@ -43,7 +43,7 @@ haiti:
   country: "Haiti"
   exclusion_period: 30
   exclusion_date: "2016/01/01"
-  new_admin_cens_wk: 52
+  admin_cens_wk: 52
   grace_pd_wks: 12
   propensity_formulas:
     num_and_denom_model_formula: "splines::ns(wk, 3) + art_init + I(have_cd4*cd4_count) + have_cd4 + birth_date"
