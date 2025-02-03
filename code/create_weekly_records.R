@@ -158,6 +158,12 @@ create_weekly_record_data <- function(
         for(tb_symptoms_variable in names(tb_symptoms_variables)){
           weekly_records[j, (tb_symptoms_variable) := tb_symptoms_variables[[tb_symptoms_variable]]]
         }
+        
+        # variables summarizing viral load
+        viral_load_variables <- summarize_viral_load(k_most_recent_visits)
+        for(viral_load_variable in names(viral_load_variables)){
+          weekly_records[j, (viral_load_variable) := viral_load_variables[[viral_load_variable]]]
+        }
 
         visit_times_variables <- summarize_visit_times(
           all_prior_visit_dates = all_prior_visit_dates,
@@ -171,31 +177,25 @@ create_weekly_record_data <- function(
 
 
       enroll_date_this_id <- dat_id[1, enroll_date]
-      weekly_records[, enroll_date := enroll_date_this_id]
 
       tpt_start_date_this_id <- dat_id[1, tpt_start_date]
       tpt_start_wk_this_id <- get_week_of_event(tpt_start_date_this_id, enroll_date_this_id)
-      weekly_records[, tpt_start_date := tpt_start_date_this_id]
       weekly_records[, tpt_start_wk := tpt_start_wk_this_id]
 
       tb_diagnosis_date_this_id <- dat_id[1, tb_diagnosis_date]
       tb_wk_this_id <- get_week_of_event(tb_diagnosis_date_this_id, enroll_date_this_id)
-      weekly_records[, tb_diagnosis_date := tb_diagnosis_date_this_id]
       weekly_records[, tb_wk := tb_wk_this_id]
 
       death_date_this_id <- dat_id[1, death_date]
       death_wk_this_id <- get_week_of_event(death_date_this_id, enroll_date_this_id)
-      weekly_records[, death_date := death_date_this_id]
       weekly_records[, death_wk := death_wk_this_id]
 
       right_cens_date_this_id <- dat_id[1, right_cens_date_tb]
       right_cens_wk_this_id <- get_week_of_event(right_cens_date_this_id, enroll_date_this_id)
-      weekly_records[, right_cens_date := right_cens_date_this_id]
       weekly_records[, right_cens_wk_tb := right_cens_wk_this_id]
       
       last_visit_date_this_id <- dat_id[1, last_visit_date]
       last_visit_wk_this_id <- get_week_of_event(last_visit_date_this_id, enroll_date_this_id)
-      weekly_records[, last_visit_date := last_visit_date_this_id]
       weekly_records[, last_visit_wk := last_visit_wk_this_id]
 
       admin_cens_date_this_id <- dat_id[1, admin_cens_date]
@@ -393,6 +393,61 @@ summarize_tb_symptoms <- function(
       )
     }else{
       out$tb_symptoms_visit_kminus2 <- 0
+    }
+  }
+  return(out)
+}
+
+summarize_viral_load <- function(
+    k_most_recent_visits
+){
+  out <- list(
+    viral_load_measured_visit_k = 0, 
+    viral_load_measured_visit_kminus1 = 0,
+    viral_load_measured_visit_kminus2 = 0,
+    viral_load_visit_k = 0,
+    viral_load_visit_kminus1 = 0,
+    viral_load_visit_kminus2 = 0
+  )
+  if(!is.null(k_most_recent_visits)){
+    n_visits <- nrow(k_most_recent_visits)
+    out$viral_load_measured_visit_k <- as.numeric(!is.na(
+      k_most_recent_visits[visit_date == max(visit_date), viral_load]
+    ))
+    if(n_visits > 1){
+      out$viral_load_measured_visit_kminus1 <- as.numeric(!is.na(
+        k_most_recent_visits[visit_date == visit_date[order(visit_date)[n_visits - 1]], viral_load]
+      ))
+    }else{
+      out$viral_load_measured_visit_kminus1 <- 0
+    }
+    if(n_visits > 2){
+      out$viral_load_measured_visit_kminus2 <- as.numeric(!is.na(
+        k_most_recent_visits[visit_date == visit_date[order(visit_date)[n_visits - 2]], viral_load]
+      ))
+    }else{
+      out$viral_load_measured_visit_kminus2 <- 0
+    }
+  }
+  
+  if(!is.null(k_most_recent_visits)){
+    n_visits <- nrow(k_most_recent_visits)
+    out$viral_load_visit_k <- zero_if_missing(
+      k_most_recent_visits[visit_date == max(visit_date), viral_load]
+    )
+    if(n_visits > 1){
+      out$viral_load_visit_kminus1 <- zero_if_missing(
+        k_most_recent_visits[visit_date == visit_date[order(visit_date)[n_visits - 1]], viral_load]
+      )
+    }else{
+      out$viral_load_visit_kminus1 <- 0
+    }
+    if(n_visits > 2){
+      out$viral_load_visit_kminus2 <- zero_if_missing(
+        k_most_recent_visits[visit_date == visit_date[order(visit_date)[n_visits - 2]], viral_load]
+      )
+    }else{
+      out$viral_load_visit_kminus2 <- 0
     }
   }
   return(out)
