@@ -13,7 +13,7 @@ sbatch --partition=$PARTITION \
   --ntasks-per-node=1 \
   --cpus-per-task=31 \
   --mem-per-cpu=6G \
-  --job-name=tb_.%a \
-  --output=/projects/dbenkes/allison/protectr/scratch/%a_%J.out \
+  --job-name=tb_hiv \
+  --output=/projects/dbenkes/allison/protectr/scratch/${SETTING}_%J.out \
   --export=SETTING=$SETTING \
   --wrap "/apps/R/4.4.0/bin/Rscript run_simulation.R"
