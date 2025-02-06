@@ -9,13 +9,19 @@
 # 6. Bootstrap
 # --------------------------------------------------------------------------------
 
+# For initial debugging scratch file
+options(echo=TRUE)
+
 # Path to installed packages on cluster
-.libPaths("~/Rlibs")
+.libPaths(c("~/Rlibs", "/apps/R/4.4.0/lib64/R/site/library", .libPaths()))
+#.libPaths("/apps/R/4.4.0/lib64/R/site/library")
+
+.libPaths()
 
 here::i_am("run_simulation.R")
 
-library(fastverse)
 library(tidyverse)
+library(fastverse)
 library(future.apply)
 library(progressr)
 
@@ -37,8 +43,7 @@ source(here::here("code/bootstrap.R"))
 # ncores <- parallel::detectCores() 
 ncores <- parallelly::availableCores()
 ncores_for_future <- max(ncores - 1, 1) 
-future::plan('multisession', workers = ncores_for_future)
-# maybe multicore?? check into this
+future::plan('multicore', workers = ncores_for_future)
 
 # 0. Get settings from config file ----------------------------------------------------------
 setting <- Sys.getenv("SETTING")
@@ -60,6 +65,8 @@ if(file.exists(here::here(paste0("data/", setting, "_weekly_records_data.rds")))
   # Read in raw data
   dat <- readRDS(here::here(paste0("data/", config$weekly_records$data_name)))
   
+  #temp to track time for creating weekly records
+  system.time({
   # Create weekly record data
   weekly_records_data <- create_weekly_record_data(
       dat = dat,
@@ -71,6 +78,8 @@ if(file.exists(here::here(paste0("data/", setting, "_weekly_records_data.rds")))
   saveRDS(weekly_records_data, 
       here::here(paste0("data/weekly_records_data_", setting, ".rds"))
   )
+  })
+
 }
 
 # 2. Subset data ----------------------------------------------------------------------------
@@ -109,6 +118,7 @@ if(!is.na(config$admin_cens_wk)){
 
 # 3. Fitting propensity scores --------------------------------------------------------------
 
+system.time({
 propensity_output <- fit_propensity_models(
 	weekly_records_data = weekly_records_data,
 	grace_pd_wks = config$grace_pd_wks,
@@ -116,6 +126,7 @@ propensity_output <- fit_propensity_models(
 	num_model_formula = config$propensity_formulas$num_and_denom_model_formula,
 	right_cens_model_formula = config$propensity_formulas$right_cens_model_formula
 )
+})
 
 # 4. Cloning procedure -----------------------------------------------------------------------
 
@@ -170,6 +181,7 @@ for(i in 1:length(config$msm_formulas)){
 
 # 6. Bootstrap ----------------------------------------------------------------
 
+system.time({
 bootstrap_results <- run_bootstrap(
   nboot = config$nboot,
   weekly_records_data = weekly_records_data,
@@ -182,6 +194,7 @@ bootstrap_results <- run_bootstrap(
   msm_formulas_death = config$msm_formulas,
   msm_formulas_death_for_tb = config$msm_formulas
 )
+})
 
 # Get bootstrap CI
 bootstrap_ci <- get_bootstrap_ci(bootstrap_results)
