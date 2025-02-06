@@ -15,7 +15,7 @@
 here::i_am("run_simulation.R")
 
 library(fastverse)
-library(tidyverse)
+#library(tidyverse)
 library(future.apply)
 library(progressr)
 
@@ -37,8 +37,7 @@ source(here::here("code/bootstrap.R"))
 # ncores <- parallel::detectCores() 
 ncores <- parallelly::availableCores()
 ncores_for_future <- max(ncores - 1, 1) 
-future::plan('multisession', workers = ncores_for_future)
-# maybe multicore?? check into this
+future::plan('multicore', workers = ncores_for_future)
 
 # 0. Get settings from config file ----------------------------------------------------------
 setting <- Sys.getenv("SETTING")
