@@ -117,8 +117,8 @@ system.time({
 propensity_output <- fit_propensity_models(
 	weekly_records_data = weekly_records_data,
 	grace_pd_wks = config$grace_pd_wks,
-	denom_model_formula = config$propensity_formulas$num_and_denom_model_formula,
-	num_model_formula = config$propensity_formulas$num_and_denom_model_formula,
+	denom_model_formula = config$propensity_formulas$denom_model_formula,
+	num_model_formula = config$propensity_formulas$num_model_formula,
 	right_cens_model_formula = config$propensity_formulas$right_cens_model_formula
 )
 })

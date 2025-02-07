@@ -12,7 +12,8 @@ default:
   new_admin_cens_wk: 52
   grace_pd_wks: 12
   propensity_formulas:
-    num_and_denom_model_formula: "splines::ns(wk, 3) + art_init + I(have_cd4*cd4_count) + have_cd4 + birth_date"
+    num_model_formula: "splines::ns(wk, 3) + art_init + I(have_cd4*cd4_count) + have_cd4 + birth_date"
+    denom_model_formula: "splines::ns(wk, 3) + art_init + I(have_cd4*cd4_count) + have_cd4 + birth_date"
     right_cens_model_formula: "splines::ns(wk, 3) + art_init + I(have_cd4*cd4_count) + have_cd4 + birth_date"
   msm_formulas:
     - "splines::ns(wk, 3) + z"
@@ -42,7 +43,8 @@ haiti:
   admin_cens_wk: 104
   grace_pd_wks: 8
   propensity_formulas:
-    num_and_denom_model_formula: "splines::ns(wk, 3) + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symptoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + enroll_year + age + district_facility + district_patient + sex + who_stage_enroll + who_stage_visit"
+    num_model_formula: "wk + wk^2 + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symptoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + enroll_year + age + district_facility + district_patient + sex + who_stage_enroll + who_stage_visit"
+    denom_model_formula: "splines::ns(wk, 3) + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symptoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + enroll_year + age + district_facility + district_patient + sex + who_stage_enroll + who_stage_visit"
     right_cens_model_formula: "splines::ns(wk, 3) + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symptoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + enroll_year + age + district_facility + district_patient + sex + who_stage_enroll + who_stage_visit + tpt_init"
   msm_formulas:
     - "splines::ns(wk, 3) + z"
@@ -69,7 +71,8 @@ sub_haiti:
   admin_cens_wk: 104
   grace_pd_wks: 8
   propensity_formulas:
-    num_and_denom_model_formula: "splines::ns(wk, 3) + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symptoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + enroll_year + age + district_facility + district_patient + sex + who_stage_enroll + who_stage_visit"
+    num_model_formula: "wk + wk^2 + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symptoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + enroll_year + age + district_facility + district_patient + sex + who_stage_enroll + who_stage_visit"
+    denom_model_formula: "splines::ns(wk, 3) + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symptoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + enroll_year + age + district_facility + district_patient + sex + who_stage_enroll + who_stage_visit"
     right_cens_model_formula: "splines::ns(wk, 3) + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symptoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + enroll_year + age + district_facility + district_patient + sex + who_stage_enroll + who_stage_visit + tpt_init"
   msm_formulas:
     - "splines::ns(wk, 3) + z"
