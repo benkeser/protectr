@@ -48,4 +48,31 @@ haiti:
     - "splines::ns(wk, 3) + z"
   n_boot: 100
   run_bootstrap: TRUE
-  
+
+sub_haiti:
+  weekly_records:
+    data_name: "sub_haiti_dat.RDS"
+    baseline_covariates:
+      - "district_facility"
+      - "district_patient"
+      - "who_stage_enroll"
+      - "who_stage_visit"
+      - "sex"
+      - "viral_load"
+      - "age"
+      - "enroll_year"
+    k: 3
+    admin_cens_wks: 104
+  country: "Haiti"
+  exclusion_period: 30
+  exclusion_date: "2016/01/01"
+  admin_cens_wk: 104
+  grace_pd_wks: 8
+  propensity_formulas:
+    num_and_denom_model_formula: "splines::ns(wk, 3) + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symtpoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + enroll_year + age + district_facility + district_patient + sex + who_stage_enroll + who_stage_visit"
+    right_cens_model_formula: "splines::ns(wk, 3) + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symtpoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + enroll_year + age + district_facility + district_patient + sex + who_stage_enroll + who_stage_visit + tpt_init"
+  msm_formulas:
+    - "splines::ns(wk, 3) + z"
+  n_boot: 100
+  run_bootstrap: TRUE
+ 
