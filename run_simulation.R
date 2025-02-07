@@ -181,7 +181,7 @@ for(i in 1:length(config$msm_formulas)){
 
 system.time({
 bootstrap_results <- run_bootstrap(
-  nboot = config$nboot,
+  nboot = config$n_boot,
   weekly_records_data = weekly_records_data,
   grace_pd_wks = config$grace_pd_wks,
   denom_model_formula = config$propensity_formulas$num_and_denom_model_formula,
