@@ -215,7 +215,7 @@ create_weekly_record_data <- function(
   # added potential filtering columns to ensure in data
   baseline_dat <- dat[, lapply(.SD, first), 
                       by = .(id), 
-                      .SDcols = c(baseline_covariates, "tb_diagnosis_date", "enroll_date", "wk")]
+                      .SDcols = c(baseline_covariates, "tb_diagnosis_date", "enroll_date")]
 
   weekly_data <- weekly_records_allids[baseline_dat, on = .(id)]
 
