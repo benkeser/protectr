@@ -194,10 +194,23 @@ bootstrap_results <- run_bootstrap(
 )
 })
 
+<<<<<<< HEAD
 saveRDS(bootstrap_results, here::here("results/bootstrap_res_temp.Rds"))
+=======
+saveRDS(
+  bootstrap_results,
+  here::here(paste0("results/", setting, "/bootstrap_results_", setting, ".rds"))
+)
+>>>>>>> a6efba1adec9df3c4b5452f93c4c7eef8b8939e8
 
 # Get bootstrap CI
 bootstrap_ci <- get_bootstrap_ci(bootstrap_results)
+
+saveRDS(
+  bootstrap_ci,
+  here::here(paste0("results/", setting, "/bootstrap_ci_", setting, ".rds"))
+)
+
 
 # 7. Save results overall -----------------------------------------------------
 
@@ -208,19 +221,19 @@ propensity_output[["models"]][["num_model"]]$qr <- NULL
 propensity_output[["models"]][["cens_model_tb"]]$qr <- NULL
 propensity_output[["models"]][["cens_model_death"]]$qr <- NULL
 
+saveRDS(
+  propensity_output,
+  here::here(paste0("results/", setting, "/propensity_output_", setting, ".rds"))
+)
+
 # Combine MSMs and null out parts no longer needed
-models <- mget(ls(pattern = paste0("^", "msm")))
-for(i in seq_len(length(models))){
-  models[[i]][["msm_model"]]$qr <- NULL
+for(i in seq_along(msm_formula_list)){  
+    msm_formula_list[[i]]$msm_fit_tb$msm_model$qr <- NULL
+    msm_formula_list[[i]]$msm_fit_death$msm_model$qr <- NULL
+    msm_formula_list[[i]]$msm_fit_death_for_tb$msm_model$qr <- NULL
 }
 
-# Combine all results
-results <- mget(c(ls(pattern = paste0("^", "propensity")),
-                  ls(pattern = paste0("^", "models")),,
-                  ls(pattern = paste0("^", "bootstrap_r")),
-                  ls(pattern = paste0("^", "bootstrap_ci"))))
-
 saveRDS(
-  results,
-  here::here(paste0("results/", setting, "/overall_results_", setting, ".rds"))
+  msm_formula_list,
+  here::here(paste0("results/", setting, "/msm_formula_list_", setting, ".rds"))
 )
