@@ -194,14 +194,10 @@ bootstrap_results <- run_bootstrap(
 )
 })
 
-<<<<<<< HEAD
-saveRDS(bootstrap_results, here::here("results/bootstrap_res_temp.Rds"))
-=======
 saveRDS(
   bootstrap_results,
   here::here(paste0("results/", setting, "/bootstrap_results_", setting, ".rds"))
 )
->>>>>>> a6efba1adec9df3c4b5452f93c4c7eef8b8939e8
 
 # Get bootstrap CI
 bootstrap_ci <- get_bootstrap_ci(bootstrap_results)
@@ -210,7 +206,6 @@ saveRDS(
   bootstrap_ci,
   here::here(paste0("results/", setting, "/bootstrap_ci_", setting, ".rds"))
 )
-
 
 # 7. Save results overall -----------------------------------------------------
 
