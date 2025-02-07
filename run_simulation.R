@@ -207,9 +207,10 @@ propensity_output[["models"]][["cens_model_tb"]]$qr <- NULL
 propensity_output[["models"]][["cens_model_death"]]$qr <- NULL
 
 # Combine MSMs and null out parts no longer needed
-models <- mget(ls(pattern = paste0("^", "msm")))
-for(i in seq_len(length(models))){
-  models[[i]][["msm_model"]]$qr <- NULL
+for(i in seq_along(msm_formula_list)){  
+    msm_formula_list[[i]]$msm_fit_tb$msm_model$qr <- NULL
+    msm_formula_list[[i]]$msm_fit_death$msm_model$qr <- NULL
+    msm_formula_list[[i]]$msm_fit_death_for_tb$msm_model$qr <- NULL
 }
 
 # Combine all results
