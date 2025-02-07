@@ -76,7 +76,7 @@ if(file.exists(here::here(paste0("data/", setting, "_weekly_records_data.rds")))
   )
 
   saveRDS(weekly_records_data, 
-      here::here(paste0("data/weekly_records_data_", setting, ".rds"))
+      here::here(paste0("data/", setting, "_weekly_records_data.rds"))
   )
   })
 
