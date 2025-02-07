@@ -212,7 +212,10 @@ create_weekly_record_data <- function(
   weekly_records_allids <- rbindlist(obs_by_week)
 
   # magic gpt code to get baseline only data
-  baseline_dat <- dat[, lapply(.SD, first), by = .(id), .SDcols = baseline_covariates]
+  # added potential filtering columns to ensure in data
+  baseline_dat <- dat[, lapply(.SD, first), 
+                      by = .(id), 
+                      .SDcols = c(baseline_covariates, "tb_diagnosis_date", "enroll_date", "wk")]
 
   weekly_data <- weekly_records_allids[baseline_dat, on = .(id)]
 
