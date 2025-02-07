@@ -73,7 +73,7 @@ try_one_bootstrap <- function(
         right_cens_model_formula = right_cens_model_formula,   
         msm_formulas_tb = msm_formulas_tb,
         msm_formulas_death = msm_formulas_death,
-        msm_formulas_death_for_tb = msm_formulas_death,
+        msm_formulas_death_for_tb = msm_formulas_death_for_tb,
         admin_cens_wks = admin_cens_wks
       )
     )
