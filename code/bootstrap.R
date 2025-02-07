@@ -67,14 +67,14 @@ try_one_bootstrap <- function(
     return(
       do_one_bootstrap(
         weekly_records_data = weekly_records_data,
-        grace_pd_wks = 8,
-        denom_model_formula = "1",
-        num_model_formula = denom_model_formula,
-        right_cens_model_formula = "1",   
+        grace_pd_wks = grace_pd_wks,
+        denom_model_formula = denom_model_formula,
+        num_model_formula = num_model_formula,
+        right_cens_model_formula = right_cens_model_formula,   
         msm_formulas_tb = msm_formulas_tb,
         msm_formulas_death = msm_formulas_death,
         msm_formulas_death_for_tb = msm_formulas_death,
-        admin_cens_wks = 52 * 2
+        admin_cens_wks = admin_cens_wks
       )
     )
   }, error = function(e){
