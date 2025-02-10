@@ -93,25 +93,25 @@ if(file.exists(here::here(paste0("data/", setting, "_weekly_records_data.rds")))
 # (3) shortening the administrative censoring follow-up period
 
 if(!is.na(config$exclusion_period)){
-    weekly_records_data_exclude <- weekly_records_data[
+    weekly_records_data <- weekly_records_data[
         is.na(tb_diagnosis_date) | (tb_diagnosis_date - enroll_date > config$exclusion_period)
     ]
 }
 
 if(!is.na(config$exclusion_date)){
     exclusion_date <- as.Date(config$exclusion_date)
-    weekly_records_data_exclude <- weekly_records_data[
+    weekly_records_data <- weekly_records_data[
 	    enroll_date > exclusion_date
     ]
 }
 
 if(!is.na(config$admin_cens_wk)){
     # should be <= admin_cens_wk used in call to create_weekly_records
-    weekly_records_data_exclude <- weekly_records_data[
+    weekly_records_data <- weekly_records_data[
         wk < config$admin_cens_wk
     ]
     
-    weekly_records_data_exclude$admin_cens_wk <- config$admin_cens_wk
+    weekly_records_data$admin_cens_wk <- config$admin_cens_wk
 }
 
 # 3. Fitting propensity scores --------------------------------------------------------------
@@ -126,6 +126,18 @@ propensity_output <- fit_propensity_models(
 )
 })
 
+# Null out parts of propensity_output no longer needed
+propensity_output$weekly_records_data <- NULL
+propensity_output[["models"]][["denom_model"]]$qr <- NULL
+propensity_output[["models"]][["num_model"]]$qr <- NULL
+propensity_output[["models"]][["cens_model_tb"]]$qr <- NULL
+propensity_output[["models"]][["cens_model_death"]]$qr <- NULL
+
+saveRDS(
+  propensity_output,
+  here::here(paste0("results/", setting, "/propensity_output_", setting, ".rds"))
+)
+
 # 4. Cloning procedure -----------------------------------------------------------------------
 
 cloned_data_sets <- create_cloned_data_set(
@@ -135,7 +147,6 @@ cloned_data_sets <- create_cloned_data_set(
 # 5. Fit marginal structural models (MSMs) ----------------------------------------------------
 
 # iterate through all formulas specified in msm_formulas in configuration file
-
 msm_formula_list <- vector("list", length = length(config$msm_formulas))
 
 for(i in 1:length(config$msm_formulas)){
@@ -177,6 +188,19 @@ for(i in 1:length(config$msm_formulas)){
 
 }
 
+# Combine MSMs and null out parts no longer needed
+for(i in seq_along(msm_formula_list)){  
+  msm_formula_list[[i]]$msm_fit_tb$msm_model$qr <- NULL
+  msm_formula_list[[i]]$msm_fit_death$msm_model$qr <- NULL
+  msm_formula_list[[i]]$msm_fit_death_for_tb$msm_model$qr <- NULL
+}
+
+# Save MSMs
+saveRDS(
+  msm_formula_list,
+  here::here(paste0("results/", setting, "/msm_formula_list_", setting, ".rds"))
+)
+
 # 6. Bootstrap ----------------------------------------------------------------
 
 system.time({
@@ -207,28 +231,3 @@ saveRDS(
   here::here(paste0("results/", setting, "/bootstrap_ci_", setting, ".rds"))
 )
 
-# 7. Save results overall -----------------------------------------------------
-
-# Null out parts of propensity_output no longer needed
-propensity_output$weekly_records_data <- NULL
-propensity_output[["models"]][["denom_model"]]$qr <- NULL
-propensity_output[["models"]][["num_model"]]$qr <- NULL
-propensity_output[["models"]][["cens_model_tb"]]$qr <- NULL
-propensity_output[["models"]][["cens_model_death"]]$qr <- NULL
-
-saveRDS(
-  propensity_output,
-  here::here(paste0("results/", setting, "/propensity_output_", setting, ".rds"))
-)
-
-# Combine MSMs and null out parts no longer needed
-for(i in seq_along(msm_formula_list)){  
-    msm_formula_list[[i]]$msm_fit_tb$msm_model$qr <- NULL
-    msm_formula_list[[i]]$msm_fit_death$msm_model$qr <- NULL
-    msm_formula_list[[i]]$msm_fit_death_for_tb$msm_model$qr <- NULL
-}
-
-saveRDS(
-  msm_formula_list,
-  here::here(paste0("results/", setting, "/msm_formula_list_", setting, ".rds"))
-)
