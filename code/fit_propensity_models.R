@@ -255,7 +255,7 @@ fit_propensity_models <- function(
 	weekly_records_data <- merge(
 	  weekly_records_data, 
 	  weekly_records_data_wts, 
-	  by = "idx", 
+	  by = c("idx", "id"), 
 	  all.x = TRUE
 	)
 
