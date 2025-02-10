@@ -252,7 +252,7 @@ fit_propensity_models <- function(
 	weekly_records_data_wts <- rbindlist(wts_by_id)
 	
 	# rejoin weights data with original weekly records data (needed later)
-	weekly_records_data <- merge(
+	weekly_records_data_wts <- merge(
 	  weekly_records_data, 
 	  weekly_records_data_wts, 
 	  by = c("idx", "id"), 
