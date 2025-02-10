@@ -232,11 +232,13 @@ fit_propensity_models <- function(
 	# Avoid memory duplication by NOT splitting manually
 	setkey(sub_weekly, id)  # Faster lookup
 	
+	ids <- unique(sub_weekly$id)
+	
 	# Run parallel processing with **no large global object copies**
 	wts_by_id <- future_lapply(
-	  unique(sub_weekly$id),  # Instead of splitting, iterate over unique IDs
-	  function(curr_id, sub_weekly) {
-	    data_chunk <- sub_weekly[id == curr_id]  # Filter instead of split
+	  ids,  
+	  function(i) {
+	    data_chunk <- sub_weekly[id == i]  # Filter instead of split
 	    
 	    # Compute weights
 	    data_chunk[, wt_tpt_tb := cumprod(prob_wt_num_tpt_tb / (prob_wt_denom_tpt_tb * prob_wt_cens_tb))]
@@ -246,14 +248,11 @@ fit_propensity_models <- function(
 	    
 	    return(data_chunk[, .(idx, id, wt_tpt_tb, wt_tpt_death, wt_cntrl_tb, wt_cntrl_death)])
 	  },
-	  sub_weekly,  # Pass the dataset as an explicit argument
 	  future.packages = "data.table"
 	)
 	
-	# Combine results efficiently
 	weekly_records_data_wts <- rbindlist(wts_by_id)
 	
-	# Merge back using idx (avoids `id` duplication issues)
 	weekly_records_data_wts <- merge(
 	  weekly_records_data, 
 	  weekly_records_data_wts, 
