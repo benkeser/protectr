@@ -216,15 +216,15 @@ fit_propensity_models <- function(
 	# 3) Turn calculated columns into appropriate weights to be used in the MSM
 	
 	# NEW split beforehand to use less memory + only required columns (thanks gpt)
-	sub_weekly <- weekly_records_data[, colnames(weekly_records_data) %in% c("id", 
-                                                              	           "prob_wt_num_tpt_tb",
-                                                              	           "prob_wt_denom_tpt_tb",
-                                                              	           "prob_wt_cens_tb",
-                                                              	           "prob_wt_num_tpt_death",
-                                                              	           "prob_wt_denom_tpt_death",
-                                                              	           "prob_wt_cens_death",
-                                                              	           "prob_wt_denom_cntrl_tb",
-                                                              	           "prob_wt_denom_cntrl_death")]
+	sub_weekly <- weekly_records_data[,  c("id", 
+                            	           "prob_wt_num_tpt_tb",
+                            	           "prob_wt_denom_tpt_tb",
+                            	           "prob_wt_cens_tb",
+                            	           "prob_wt_num_tpt_death",
+                            	           "prob_wt_denom_tpt_death",
+                            	           "prob_wt_cens_death",
+                            	           "prob_wt_denom_cntrl_tb",
+                            	           "prob_wt_denom_cntrl_death")]
 	
 	weekly_records_data_this_id <- split(sub_weekly, sub_weekly$id)
 	
