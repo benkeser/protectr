@@ -215,13 +215,11 @@ fit_propensity_models <- function(
 
 	# 3) Turn calculated columns into appropriate weights to be used in the MSM
 	
-	# NEW split beforehand to use less memory + only required columns (thanks gpt)
+	# Add row index for safe joining later
+	weekly_records_data[, idx := .I]  
 	
-	# give idx to rejoin later
-	weekly_records_data$idx <- 1:nrow(weekly_records_data)
-	
-	sub_weekly <- weekly_records_data[, .(id, 
-	                                      idx,
+	# Select only necessary columns to reduce memory load
+	sub_weekly <- weekly_records_data[, .(id, idx,  
 	                                      prob_wt_num_tpt_tb,
 	                                      prob_wt_denom_tpt_tb,
 	                                      prob_wt_cens_tb,
@@ -231,33 +229,79 @@ fit_propensity_models <- function(
 	                                      prob_wt_denom_cntrl_tb,
 	                                      prob_wt_denom_cntrl_death)]
 	
+	# Avoid memory duplication by NOT splitting manually
+	setkey(sub_weekly, id)  # Faster lookup
 	
-	weekly_records_data_this_id <- split(sub_weekly, sub_weekly$id)
-	
-	wts_by_id <- future.apply::future_lapply(
-	  weekly_records_data_this_id, 
-	  function(data_chunk) {
-  	  # Weight calculations
-  	  data_chunk[, wt_tpt_tb := cumprod(prob_wt_num_tpt_tb / (prob_wt_denom_tpt_tb * prob_wt_cens_tb))]
-  	  data_chunk[, wt_tpt_death := cumprod(prob_wt_num_tpt_death / (prob_wt_denom_tpt_death * prob_wt_cens_death))]
-  	  data_chunk[, wt_cntrl_tb := cumprod(1 / (prob_wt_denom_cntrl_tb * prob_wt_cens_tb))]
-  	  data_chunk[, wt_cntrl_death := cumprod(1 / (prob_wt_denom_cntrl_death * prob_wt_cens_death))]
-  	  
-  	  return(data_chunk[, .(id, idx, wt_tpt_tb, wt_tpt_death, wt_cntrl_tb, wt_cntrl_death)])
+	# Run parallel processing with **no large global object copies**
+	wts_by_id <- future_lapply(
+	  unique(sub_weekly$id),  # Instead of splitting, iterate over unique IDs
+	  function(curr_id, sub_weekly) {
+	    data_chunk <- sub_weekly[id == curr_id]  # Filter instead of split
+	    
+	    # Compute weights
+	    data_chunk[, wt_tpt_tb := cumprod(prob_wt_num_tpt_tb / (prob_wt_denom_tpt_tb * prob_wt_cens_tb))]
+	    data_chunk[, wt_tpt_death := cumprod(prob_wt_num_tpt_death / (prob_wt_denom_tpt_death * prob_wt_cens_death))]
+	    data_chunk[, wt_cntrl_tb := cumprod(1 / (prob_wt_denom_cntrl_tb * prob_wt_cens_tb))]
+	    data_chunk[, wt_cntrl_death := cumprod(1 / (prob_wt_denom_cntrl_death * prob_wt_cens_death))]
+	    
+	    return(data_chunk[, .(idx, id, wt_tpt_tb, wt_tpt_death, wt_cntrl_tb, wt_cntrl_death)])
 	  },
-	  future.envir = baseenv(),
-	  future.packages = c("data.table")
+	  sub_weekly,  # Pass the dataset as an explicit argument
+	  future.packages = "data.table"
 	)
 	
+	# Combine results efficiently
 	weekly_records_data_wts <- rbindlist(wts_by_id)
 	
-	# rejoin weights data with original weekly records data (needed later)
-	weekly_records_data_wts <- merge(
+	# Merge back using idx (avoids `id` duplication issues)
+	weekly_records_data <- merge(
 	  weekly_records_data, 
 	  weekly_records_data_wts, 
-	  by = c("idx", "id"), 
+	  by = "idx", 
 	  all.x = TRUE
 	)
+	
+	# give idx to rejoin later
+# 	weekly_records_data$idx <- 1:nrow(weekly_records_data)
+# 	
+# 	sub_weekly <- weekly_records_data[, .(id, 
+# 	                                      idx,
+# 	                                      prob_wt_num_tpt_tb,
+# 	                                      prob_wt_denom_tpt_tb,
+# 	                                      prob_wt_cens_tb,
+# 	                                      prob_wt_num_tpt_death,
+# 	                                      prob_wt_denom_tpt_death,
+# 	                                      prob_wt_cens_death,
+# 	                                      prob_wt_denom_cntrl_tb,
+# 	                                      prob_wt_denom_cntrl_death)]
+# 	
+# 	
+# 	weekly_records_data_this_id <- split(sub_weekly, sub_weekly$id)
+# 	
+# 	wts_by_id <- future.apply::future_lapply(
+# 	  weekly_records_data_this_id, 
+# 	  function(data_chunk) {
+#   	  # Weight calculations
+#   	  data_chunk[, wt_tpt_tb := cumprod(prob_wt_num_tpt_tb / (prob_wt_denom_tpt_tb * prob_wt_cens_tb))]
+#   	  data_chunk[, wt_tpt_death := cumprod(prob_wt_num_tpt_death / (prob_wt_denom_tpt_death * prob_wt_cens_death))]
+#   	  data_chunk[, wt_cntrl_tb := cumprod(1 / (prob_wt_denom_cntrl_tb * prob_wt_cens_tb))]
+#   	  data_chunk[, wt_cntrl_death := cumprod(1 / (prob_wt_denom_cntrl_death * prob_wt_cens_death))]
+#   	  
+#   	  return(data_chunk[, .(id, idx, wt_tpt_tb, wt_tpt_death, wt_cntrl_tb, wt_cntrl_death)])
+# 	  },
+# 	  future.envir = baseenv(),
+# 	  future.packages = c("data.table")
+# 	)
+# 	
+# 	weekly_records_data_wts <- rbindlist(wts_by_id)
+# 	
+# 	# rejoin weights data with original weekly records data (needed later)
+# 	weekly_records_data_wts <- merge(
+# 	  weekly_records_data, 
+# 	  weekly_records_data_wts, 
+# 	  by = c("idx", "id"), 
+# 	  all.x = TRUE
+# 	)
 
 	out <- list()
 	out$weekly_records_data <- weekly_records_data_wts

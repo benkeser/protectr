@@ -85,8 +85,8 @@ try_one_bootstrap <- function(
         msm_fits_death = NULL,
         msm_fits_death_for_tb = NULL,
         cuminc = NULL,
-        error = TRUE,
-        error_msg = e
+        error = TRUE #,
+        # error_msg = e
       )
     )
   })
