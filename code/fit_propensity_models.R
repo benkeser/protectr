@@ -254,54 +254,12 @@ fit_propensity_models <- function(
 	weekly_records_data_wts <- rbindlist(wts_by_id)
 	
 	# Merge back using idx (avoids `id` duplication issues)
-	weekly_records_data <- merge(
+	weekly_records_data_wts <- merge(
 	  weekly_records_data, 
 	  weekly_records_data_wts, 
-	  by = "idx", 
+	  by = c("idx", "id"), 
 	  all.x = TRUE
 	)
-	
-	# give idx to rejoin later
-# 	weekly_records_data$idx <- 1:nrow(weekly_records_data)
-# 	
-# 	sub_weekly <- weekly_records_data[, .(id, 
-# 	                                      idx,
-# 	                                      prob_wt_num_tpt_tb,
-# 	                                      prob_wt_denom_tpt_tb,
-# 	                                      prob_wt_cens_tb,
-# 	                                      prob_wt_num_tpt_death,
-# 	                                      prob_wt_denom_tpt_death,
-# 	                                      prob_wt_cens_death,
-# 	                                      prob_wt_denom_cntrl_tb,
-# 	                                      prob_wt_denom_cntrl_death)]
-# 	
-# 	
-# 	weekly_records_data_this_id <- split(sub_weekly, sub_weekly$id)
-# 	
-# 	wts_by_id <- future.apply::future_lapply(
-# 	  weekly_records_data_this_id, 
-# 	  function(data_chunk) {
-#   	  # Weight calculations
-#   	  data_chunk[, wt_tpt_tb := cumprod(prob_wt_num_tpt_tb / (prob_wt_denom_tpt_tb * prob_wt_cens_tb))]
-#   	  data_chunk[, wt_tpt_death := cumprod(prob_wt_num_tpt_death / (prob_wt_denom_tpt_death * prob_wt_cens_death))]
-#   	  data_chunk[, wt_cntrl_tb := cumprod(1 / (prob_wt_denom_cntrl_tb * prob_wt_cens_tb))]
-#   	  data_chunk[, wt_cntrl_death := cumprod(1 / (prob_wt_denom_cntrl_death * prob_wt_cens_death))]
-#   	  
-#   	  return(data_chunk[, .(id, idx, wt_tpt_tb, wt_tpt_death, wt_cntrl_tb, wt_cntrl_death)])
-# 	  },
-# 	  future.envir = baseenv(),
-# 	  future.packages = c("data.table")
-# 	)
-# 	
-# 	weekly_records_data_wts <- rbindlist(wts_by_id)
-# 	
-# 	# rejoin weights data with original weekly records data (needed later)
-# 	weekly_records_data_wts <- merge(
-# 	  weekly_records_data, 
-# 	  weekly_records_data_wts, 
-# 	  by = c("idx", "id"), 
-# 	  all.x = TRUE
-# 	)
 
 	out <- list()
 	out$weekly_records_data <- weekly_records_data_wts
