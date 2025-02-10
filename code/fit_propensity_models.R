@@ -248,7 +248,8 @@ fit_propensity_models <- function(
 	    
 	    return(data_chunk[, .(idx, id, wt_tpt_tb, wt_tpt_death, wt_cntrl_tb, wt_cntrl_death)])
 	  },
-	  future.packages = "data.table"
+	  future.packages = "data.table",
+	  future.globals = "sub_weekly"
 	)
 	
 	weekly_records_data_wts <- rbindlist(wts_by_id)
