@@ -216,15 +216,21 @@ fit_propensity_models <- function(
 	# 3) Turn calculated columns into appropriate weights to be used in the MSM
 	
 	# NEW split beforehand to use less memory + only required columns (thanks gpt)
-	sub_weekly <- weekly_records_data[,  c("id", 
-                            	           "prob_wt_num_tpt_tb",
-                            	           "prob_wt_denom_tpt_tb",
-                            	           "prob_wt_cens_tb",
-                            	           "prob_wt_num_tpt_death",
-                            	           "prob_wt_denom_tpt_death",
-                            	           "prob_wt_cens_death",
-                            	           "prob_wt_denom_cntrl_tb",
-                            	           "prob_wt_denom_cntrl_death")]
+	
+	# give idx to rejoin later
+	weekly_records_data$idx <- 1:nrow(weekly_records_data)
+	
+	sub_weekly <- weekly_records_data[, .(id, 
+	                                      idx,
+	                                      prob_wt_num_tpt_tb,
+	                                      prob_wt_denom_tpt_tb,
+	                                      prob_wt_cens_tb,
+	                                      prob_wt_num_tpt_death,
+	                                      prob_wt_denom_tpt_death,
+	                                      prob_wt_cens_death,
+	                                      prob_wt_denom_cntrl_tb,
+	                                      prob_wt_denom_cntrl_death)]
+	
 	
 	weekly_records_data_this_id <- split(sub_weekly, sub_weekly$id)
 	
@@ -237,13 +243,21 @@ fit_propensity_models <- function(
   	  data_chunk[, wt_cntrl_tb := cumprod(1 / (prob_wt_denom_cntrl_tb * prob_wt_cens_tb))]
   	  data_chunk[, wt_cntrl_death := cumprod(1 / (prob_wt_denom_cntrl_death * prob_wt_cens_death))]
   	  
-  	  return(data_chunk)
+  	  return(data_chunk[, .(id, idx, wt_tpt_tb, wt_tpt_death, wt_cntrl_tb, wt_cntrl_death)])
 	  },
 	  future.envir = baseenv(),
 	  future.packages = c("data.table")
 	)
 	
 	weekly_records_data_wts <- rbindlist(wts_by_id)
+	
+	# rejoin weights data with original weekly records data (needed later)
+	weekly_records_data <- merge(
+	  weekly_records_data, 
+	  weekly_records_data_wts, 
+	  by = "idx", 
+	  all.x = TRUE
+	)
 
 	out <- list()
 	out$weekly_records_data <- weekly_records_data_wts

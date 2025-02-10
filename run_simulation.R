@@ -126,7 +126,15 @@ propensity_output <- fit_propensity_models(
 )
 })
 
-# Null out parts of propensity_output no longer needed
+# save later because need weekly records data with weights
+
+# 4. Cloning procedure -----------------------------------------------------------------------
+
+cloned_data_sets <- create_cloned_data_set(
+	propensity_output = propensity_output
+)
+
+# Null out parts of propensity_output no longer needed & save
 propensity_output$weekly_records_data <- NULL
 propensity_output[["models"]][["denom_model"]]$qr <- NULL
 propensity_output[["models"]][["num_model"]]$qr <- NULL
@@ -136,12 +144,6 @@ propensity_output[["models"]][["cens_model_death"]]$qr <- NULL
 saveRDS(
   propensity_output,
   here::here(paste0("results/", setting, "/propensity_output_", setting, ".rds"))
-)
-
-# 4. Cloning procedure -----------------------------------------------------------------------
-
-cloned_data_sets <- create_cloned_data_set(
-	propensity_output = propensity_output
 )
 
 # 5. Fit marginal structural models (MSMs) ----------------------------------------------------
