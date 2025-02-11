@@ -212,6 +212,8 @@ run_bootstrap <- function(
         future.apply::future_replicate(
             nboot, {
 
+				weekly_records_data <- get("weekly_records_data", envir = .GlobalEnv)
+				
 				sampled_ids <- sample(unique(weekly_records_data$id), replace = TRUE)
 
 				weekly_records_data_bootstrap_by_id <- lapply(sampled_ids, function(this_id) {
@@ -237,7 +239,7 @@ run_bootstrap <- function(
 					msm_formulas_death_for_tb = msm_formulas_death_for_tb,
 					admin_cens_wks = admin_cens_wks
             	)},
-			future.globals = c("weekly_records_data")
+			future.globals = FALSE
         )
 
     return(bootstrap_results)
