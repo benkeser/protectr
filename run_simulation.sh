@@ -11,8 +11,8 @@ export PATH=/apps/R/4.4.0/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin
 sbatch --partition=$PARTITION \
   --nodes=1 \
   --ntasks-per-node=1 \
-  --cpus-per-task=31 \
-  --mem-per-cpu=6G \
+  --cpus-per-task=12 \
+  --mem-per-cpu=15G \
   --job-name=tb_hiv \
   --output=/projects/dbenkes/allison/protectr/scratch/${SETTING}_%J.out \
   --export=SETTING=$SETTING \

@@ -45,8 +45,8 @@ source(here::here("code/bootstrap.R"))
 # Opt for parallelly package instead, request appropriate number of nodes allocated in bash script
 # ncores <- parallel::detectCores()
 ncores <- parallelly::availableCores()
-ncores_for_future <- max(ncores - 1, 1)
-future::plan("multicore", workers = ncores_for_future)
+#ncores_for_future <- max(ncores - 1, 1)
+future::plan("multicore", workers = ncores)
 
 # 0. Get settings from config file ----------------------------------------------------------
 setting <- Sys.getenv("SETTING")
