@@ -237,7 +237,7 @@ run_bootstrap <- function(
 					msm_formulas_death_for_tb = msm_formulas_death_for_tb,
 					admin_cens_wks = admin_cens_wks
             	)},
-			future.globals = c()
+			future.globals = c("weekly_records_data")
         )
 
     return(bootstrap_results)
