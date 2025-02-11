@@ -13,7 +13,7 @@
 options(echo = TRUE)
 
 # increase size allowed future (default 500mb)
-options(future.globals.maxSize = 2.2 * 1024^3) # 2 GB
+options(future.globals.maxSize = 2.5 * 1024^3) # 2.5 GB
 
 # Path to installed packages on cluster
 .libPaths(c("~/Rlibs", "/apps/R/4.4.0/lib64/R/site/library", .libPaths()))
