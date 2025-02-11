@@ -57,6 +57,10 @@ fit_propensity_models <- function(
 		family = stats::binomial(),
 		data = denom_model_data
 	)
+
+	# strip glm immediately to avoid memory issues
+	denom_model <- strip_glm(denom_model)
+
 	weekly_records_data[, denom_model_prediction := predict(denom_model, newdata = weekly_records_data, type = "response")]
 
 	# TPT weights
@@ -129,6 +133,8 @@ fit_propensity_models <- function(
 		data = num_model_data
 	)
 
+	num_model <- strip_glm(num_model)
+
 	weekly_records_data[, num_model_prediction := predict(num_model, newdata = weekly_records_data, type = "response")]
 
 	# if not initiated prior to the end of the grace period, prob of
@@ -186,6 +192,8 @@ fit_propensity_models <- function(
 		data = cens_model_data_tb
 	)
 
+	cens_model_tb <- strip_glm(cens_model_tb)
+
 	fitted_values <- predict(cens_model_tb, newdata = weekly_records_data, type = "response")
 	uncens_probs <- c(1, 1 - fitted_values[1:(length(fitted_values)-1)])
 	uncens_probs[weekly_records_data$wk == 1] <- 1
@@ -205,6 +213,8 @@ fit_propensity_models <- function(
 		family = stats::binomial(),
 		data = cens_model_data_death
 	)
+
+	cens_model_death <- strip_glm(cens_model_death)
 
 	fitted_values <- predict(cens_model_death, newdata = weekly_records_data, type = "response")
 	uncens_probs <- c(1, 1 - fitted_values[1:(length(fitted_values)-1)])
@@ -230,7 +240,7 @@ fit_propensity_models <- function(
 	                                      prob_wt_denom_cntrl_death)]
 	
 	# Avoid memory duplication by NOT splitting manually
-	setkey(sub_weekly, id)  # Faster lookup
+	# setkey(sub_weekly, id)  # Faster lookup
 	
 	ids <- unique(sub_weekly$id)
 	
