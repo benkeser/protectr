@@ -12,7 +12,7 @@ sbatch --partition=$PARTITION \
   --nodes=1 \
   --ntasks-per-node=1 \
   --cpus-per-task=4 \
-  --mem-per-cpu=47G \
+  --mem-per-cpu=46G \
   --job-name=tb_hiv \
   --output=/projects/dbenkes/allison/protectr/scratch/${SETTING}_%J.out \
   --export=SETTING=$SETTING \
