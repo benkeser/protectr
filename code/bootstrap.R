@@ -172,6 +172,7 @@ do_one_bootstrap <- function(
         SIMPLIFY = FALSE,
         USE.NAMES = TRUE
     )
+
     # !!!!!!! replace msm_models with NULL to avoid ballooning object sizes !!!!!!
     for (i in seq_len(length(msm_fits_tb))) {
         msm_fits_tb[[i]]$msm_model <- NULL
@@ -221,7 +222,12 @@ run_bootstrap <- function(
                 msm_formulas_death_for_tb = msm_formulas_death_for_tb,
                 admin_cens_wks = admin_cens_wks
             ),
-			future.globals = c("weekly_records_data")
+			future.globals = c("weekly_records_data", 
+			"fit_propensity_models",
+			"create_cloned_data_set",
+			"fit_msm",
+			"compute_cf_init_dist", 
+			"compute_cuminc")
         )
 
     return(bootstrap_results)
