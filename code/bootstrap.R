@@ -105,21 +105,22 @@ do_one_bootstrap <- function(
     msm_formulas_death_for_tb = msm_formulas_death,
     admin_cens_wks = 52 * 2,
     ...) {
-    sampled_ids <- sample(unique(weekly_records_data$id), replace = TRUE)
+    # sampled_ids <- sample(unique(weekly_records_data$id), replace = TRUE)
 
-    weekly_records_data_bootstrap_by_id <- lapply(sampled_ids, function(this_id) {
-        return(weekly_records_data[id == this_id])
-    })
+    # weekly_records_data_bootstrap_by_id <- lapply(sampled_ids, function(this_id) {
+    #     return(weekly_records_data[id == this_id])
+    # })
 
-    weekly_records_data_bootstrap <- rbindlist(
-        weekly_records_data_bootstrap_by_id,
-        idcol = "new_id"
-    )
-    setnames(weekly_records_data_bootstrap, old = "id", new = "orig_id")
-    setnames(weekly_records_data_bootstrap, old = "new_id", new = "id")
+    # weekly_records_data_bootstrap <- rbindlist(
+    #     weekly_records_data_bootstrap_by_id,
+    #     idcol = "new_id"
+    # )
+    # setnames(weekly_records_data_bootstrap, old = "id", new = "orig_id")
+    # setnames(weekly_records_data_bootstrap, old = "new_id", new = "id")
 
     propensity_output <- fit_propensity_models(
-        weekly_records_data_bootstrap,
+        #weekly_records_data_bootstrap,
+		weekly_records_data,
         grace_pd_wks = grace_pd_wks,
         denom_model_formula = denom_model_formula,
         num_model_formula = num_model_formula,
@@ -209,18 +210,34 @@ run_bootstrap <- function(
 
     bootstrap_results <-
         future.apply::future_replicate(
-            nboot, try_one_bootstrap(
-                weekly_records_data = weekly_records_data,
-                grace_pd_wks = grace_pd_wks,
-                denom_model_formula = denom_model_formula,
-                num_model_formula = num_model_formula,
-                right_cens_model_formula = right_cens_model_formula,
-                msm_formulas_tb = msm_formulas_tb,
-                msm_formulas_death = msm_formulas_death,
-                msm_formulas_death_for_tb = msm_formulas_death_for_tb,
-                admin_cens_wks = admin_cens_wks
-            ),
-			future.globals = c("weekly_records_data")
+            nboot, {
+
+				sampled_ids <- sample(unique(weekly_records_data$id), replace = TRUE)
+
+				weekly_records_data_bootstrap_by_id <- lapply(sampled_ids, function(this_id) {
+					return(weekly_records_data[id == this_id])
+				})
+
+				weekly_records_data_bootstrap <- rbindlist(
+					weekly_records_data_bootstrap_by_id,
+					idcol = "new_id"
+				)
+
+				setnames(weekly_records_data_bootstrap, old = "id", new = "orig_id")
+				setnames(weekly_records_data_bootstrap, old = "new_id", new = "id")
+
+				try_one_bootstrap(
+					weekly_records_data = weekly_records_data_bootstrap,
+					grace_pd_wks = grace_pd_wks,
+					denom_model_formula = denom_model_formula,
+					num_model_formula = num_model_formula,
+					right_cens_model_formula = right_cens_model_formula,
+					msm_formulas_tb = msm_formulas_tb,
+					msm_formulas_death = msm_formulas_death,
+					msm_formulas_death_for_tb = msm_formulas_death_for_tb,
+					admin_cens_wks = admin_cens_wks
+            	)},
+			future.globals = c()
         )
 
     return(bootstrap_results)
