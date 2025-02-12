@@ -209,26 +209,48 @@ run_bootstrap <- function(
     msm_formulas_death_for_tb = msm_formulas_death,
     admin_cens_wks = 52 * 2) {
     
-	bootstrap_results <-
-        future.apply::future_replicate(
-            nboot, try_one_bootstrap(
-                weekly_records_data = weekly_records_data,
-                grace_pd_wks = grace_pd_wks,
-                denom_model_formula = denom_model_formula,
-                num_model_formula = num_model_formula,
-                right_cens_model_formula = right_cens_model_formula,
-                msm_formulas_tb = msm_formulas_tb,
-                msm_formulas_death = msm_formulas_death,
-                msm_formulas_death_for_tb = msm_formulas_death_for_tb,
-                admin_cens_wks = admin_cens_wks
-            ),
-			future.globals = c("weekly_records_data", 
-			"fit_propensity_models",
-			"create_cloned_data_set",
-			"fit_msm",
-			"compute_cf_init_dist", 
-			"compute_cuminc")
-        )
+# 	bootstrap_results <-
+#         future.apply::future_replicate(
+#             nboot, try_one_bootstrap(
+#                 weekly_records_data = weekly_records_data,
+#                 grace_pd_wks = grace_pd_wks,
+#                 denom_model_formula = denom_model_formula,
+#                 num_model_formula = num_model_formula,
+#                 right_cens_model_formula = right_cens_model_formula,
+#                 msm_formulas_tb = msm_formulas_tb,
+#                 msm_formulas_death = msm_formulas_death,
+#                 msm_formulas_death_for_tb = msm_formulas_death_for_tb,
+#                 admin_cens_wks = admin_cens_wks
+#             ),
+# 			future.globals = c("weekly_records_data", 
+# 			"fit_propensity_models",
+# 			"create_cloned_data_set",
+# 			"fit_msm",
+# 			"compute_cf_init_dist", 
+# 			"compute_cuminc")
+#         )
+  
+  
+  bootstrap_results <-
+    future.apply::future_sapply(
+      1:nboot, try_one_bootstrap(
+        weekly_records_data = weekly_records_data,
+        grace_pd_wks = grace_pd_wks,
+        denom_model_formula = denom_model_formula,
+        num_model_formula = num_model_formula,
+        right_cens_model_formula = right_cens_model_formula,
+        msm_formulas_tb = msm_formulas_tb,
+        msm_formulas_death = msm_formulas_death,
+        msm_formulas_death_for_tb = msm_formulas_death_for_tb,
+        admin_cens_wks = admin_cens_wks
+      ),
+      future.globals = c("weekly_records_data", 
+                         "fit_propensity_models",
+                         "create_cloned_data_set",
+                         "fit_msm",
+                         "compute_cf_init_dist", 
+                         "compute_cuminc")
+    )
 
     return(bootstrap_results)
 }
