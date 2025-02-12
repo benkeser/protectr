@@ -53,6 +53,7 @@
 #'     each of the MSM fits
 
 try_one_bootstrap <- function(
+    boot_num, # added for sapply
     weekly_records_data,
     grace_pd_wks = 8,
     denom_model_formula = "1",
@@ -233,17 +234,16 @@ run_bootstrap <- function(
   
   bootstrap_results <-
     future.apply::future_sapply(
-      1:nboot, try_one_bootstrap(
-        weekly_records_data = weekly_records_data,
-        grace_pd_wks = grace_pd_wks,
-        denom_model_formula = denom_model_formula,
-        num_model_formula = num_model_formula,
-        right_cens_model_formula = right_cens_model_formula,
-        msm_formulas_tb = msm_formulas_tb,
-        msm_formulas_death = msm_formulas_death,
-        msm_formulas_death_for_tb = msm_formulas_death_for_tb,
-        admin_cens_wks = admin_cens_wks
-      ),
+      1:nboot, try_one_bootstrap,
+      weekly_records_data = weekly_records_data,
+      grace_pd_wks = grace_pd_wks,
+      denom_model_formula = denom_model_formula,
+      num_model_formula = num_model_formula,
+      right_cens_model_formula = right_cens_model_formula,
+      msm_formulas_tb = msm_formulas_tb,
+      msm_formulas_death = msm_formulas_death,
+      msm_formulas_death_for_tb = msm_formulas_death_for_tb,
+      admin_cens_wks = admin_cens_wks,
       future.globals = c("weekly_records_data", 
                          "fit_propensity_models",
                          "create_cloned_data_set",
