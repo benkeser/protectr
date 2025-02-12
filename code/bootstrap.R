@@ -95,7 +95,7 @@ try_one_bootstrap <- function(
 }
 
 do_one_bootstrap <- function(
-    weekly_records_data = weekly_records_formula,
+    weekly_records_data,
     grace_pd_wks = 8,
     denom_model_formula = "1",
     num_model_formula = denom_model_formula,
@@ -199,7 +199,7 @@ do_one_bootstrap <- function(
 
 run_bootstrap <- function(
     nboot = 1e3,
-    weekly_records_data = weekly_records_data,
+    weekly_records_data,
     grace_pd_wks = 8,
     denom_model_formula = "1",
     num_model_formula = denom_model_formula,
