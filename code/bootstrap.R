@@ -53,7 +53,7 @@
 #'     each of the MSM fits
 
 try_one_bootstrap <- function(
-    weekly_records_data = weekly_records_data,
+    weekly_records_data,
     grace_pd_wks = 8,
     denom_model_formula = "1",
     num_model_formula = denom_model_formula,
