@@ -14,6 +14,7 @@ options(echo = TRUE)
 
 # increase size allowed future (default 500mb)
 options(future.globals.maxSize = 5 * 1024^3) # 5 GB
+options(future.globals.onReference = "error")
 
 # Path to installed packages on cluster
 .libPaths(c("~/Rlibs", "/apps/R/4.4.0/lib64/R/site/library", .libPaths()))
@@ -46,7 +47,8 @@ source(here::here("code/bootstrap.R"))
 # ncores <- parallel::detectCores()
 ncores <- parallelly::availableCores()
 #ncores_for_future <- max(ncores - 1, 1)
-future::plan("multicore", workers = ncores)
+#future::plan("multicore", workers = ncores)
+future::plan("multisession", workers = ncores)
 
 # 0. Get settings from config file ----------------------------------------------------------
 setting <- Sys.getenv("SETTING")
