@@ -221,14 +221,14 @@ run_bootstrap <- function(
                 msm_formulas_death = msm_formulas_death,
                 msm_formulas_death_for_tb = msm_formulas_death_for_tb,
                 admin_cens_wks = admin_cens_wks
-            # ),
-			# future.globals = c("weekly_records_data", 
-			# "fit_propensity_models",
-			# "create_cloned_data_set",
-			# "fit_msm",
-			# "compute_cf_init_dist", 
-			# "compute_cuminc")
-        ))
+            ),
+			future.globals = c("weekly_records_data", 
+			"fit_propensity_models",
+			"create_cloned_data_set",
+			"fit_msm",
+			"compute_cf_init_dist", 
+			"compute_cuminc")
+        )
 
     return(bootstrap_results)
 }
