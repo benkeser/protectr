@@ -48,7 +48,7 @@ haiti:
     right_cens_model_formula: "splines::ns(wk, 3) + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symptoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + enroll_year + age + district_facility + district_patient + sex + who_stage_enroll + who_stage_visit + tpt_init"
   msm_formulas:
     - "splines::ns(wk, 3) + z"
-  n_boot: 100
+  n_boot: 1000
   run_bootstrap: TRUE
 
 sub_haiti:
