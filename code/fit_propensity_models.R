@@ -245,9 +245,26 @@ fit_propensity_models <- function(
 	ids <- unique(sub_weekly$id)
 	
 	# Run parallel processing with **no large global object copies**
-	wts_by_id <- future_lapply(
+	# wts_by_id <- future_lapply(
+	#   ids,  
+	#   function(i) {
+	#     data_chunk <- sub_weekly[id == i]  # Filter instead of split
+	    
+	#     # Compute weights
+	#     data_chunk[, wt_tpt_tb := cumprod(prob_wt_num_tpt_tb / (prob_wt_denom_tpt_tb * prob_wt_cens_tb))]
+	#     data_chunk[, wt_tpt_death := cumprod(prob_wt_num_tpt_death / (prob_wt_denom_tpt_death * prob_wt_cens_death))]
+	#     data_chunk[, wt_cntrl_tb := cumprod(1 / (prob_wt_denom_cntrl_tb * prob_wt_cens_tb))]
+	#     data_chunk[, wt_cntrl_death := cumprod(1 / (prob_wt_denom_cntrl_death * prob_wt_cens_death))]
+	    
+	#     return(data_chunk[, .(idx, id, wt_tpt_tb, wt_tpt_death, wt_cntrl_tb, wt_cntrl_death)])
+	#   },
+	#   future.packages = "data.table",
+	#   future.globals = "sub_weekly"
+	# )
+
+	wts_by_id <- lapply(
 	  ids,  
-	  function(i) {
+	  function(i, sub_weekly) {
 	    data_chunk <- sub_weekly[id == i]  # Filter instead of split
 	    
 	    # Compute weights
@@ -257,10 +274,7 @@ fit_propensity_models <- function(
 	    data_chunk[, wt_cntrl_death := cumprod(1 / (prob_wt_denom_cntrl_death * prob_wt_cens_death))]
 	    
 	    return(data_chunk[, .(idx, id, wt_tpt_tb, wt_tpt_death, wt_cntrl_tb, wt_cntrl_death)])
-	  },
-	  future.packages = "data.table",
-	  future.globals = "sub_weekly"
-	)
+	  }, sub_weekly = sub_weekly)
 	
 	weekly_records_data_wts <- rbindlist(wts_by_id)
 	
