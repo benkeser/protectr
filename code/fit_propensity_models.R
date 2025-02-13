@@ -33,6 +33,7 @@ fit_propensity_models <- function(
 	num_model_formula = denom_model_formula,
 	right_cens_model_formula = "1",
 	return_models = TRUE,
+	skip_cens_for_tb = FALSE,
 	...
 ){
 	
@@ -180,25 +181,30 @@ fit_propensity_models <- function(
 
 
   # RIGHT-CENSORING weights for tb
-	cens_model_data_tb <- weekly_records_data[wk < admin_cens_wk]
+  if(!skip_cens_for_tb){
+		cens_model_data_tb <- weekly_records_data[wk < admin_cens_wk]
 
-	cens_model_data_tb[, cens_outcome := (wk == right_cens_wk_tb) & ((tb_wk == 99999) | (death_wk == 99999))]
+		cens_model_data_tb[, cens_outcome := (wk == right_cens_wk_tb) & ((tb_wk == 99999) | (death_wk == 99999))]
 
-	# regress the outcome variable against covariates
-	cens_model_form <- paste0("cens_outcome ~ ", right_cens_model_formula)
-	cens_model_tb <- glm(
-		cens_model_form,
-		family = stats::binomial(),
-		data = cens_model_data_tb
-	)
+		# regress the outcome variable against covariates
+		cens_model_form <- paste0("cens_outcome ~ ", right_cens_model_formula)
+		cens_model_tb <- glm(
+			cens_model_form,
+			family = stats::binomial(),
+			data = cens_model_data_tb
+		)
 
-	cens_model_tb <- strip_glm(cens_model_tb)
+		cens_model_tb <- strip_glm(cens_model_tb)
 
-	fitted_values <- predict(cens_model_tb, newdata = weekly_records_data, type = "response")
-	uncens_probs <- c(1, 1 - fitted_values[1:(length(fitted_values)-1)])
-	uncens_probs[weekly_records_data$wk == 1] <- 1
+		fitted_values <- predict(cens_model_tb, newdata = weekly_records_data, type = "response")
+		uncens_probs <- c(1, 1 - fitted_values[1:(length(fitted_values)-1)])
+		uncens_probs[weekly_records_data$wk == 1] <- 1
 
-	weekly_records_data[, prob_wt_cens_tb := uncens_probs]
+		weekly_records_data[, prob_wt_cens_tb := uncens_probs]
+	}else{
+		weekly_records_data[, prob_wt_cens_tb := 1]
+		cens_model_tb <- NULL
+	}
 
 
   # RIGHT-CENSORING weights for death
@@ -296,10 +302,10 @@ fit_propensity_models <- function(
 	out$grace_pd_wks <- grace_pd_wks
 
 	if(return_models){
-		out$models$denom_model <- strip_glm(denom_model)
-		out$models$num_model <- strip_glm(num_model)
-		out$models$cens_model_tb <- strip_glm(cens_model_tb)
-		out$models$cens_model_death <- strip_glm(cens_model_death)
+		out$models$denom_model <- denom_model
+		out$models$num_model <- num_model
+		out$models$cens_model_tb <- cens_model_tb
+		out$models$cens_model_death <- cens_model_death
 	}
 
 	return(out)

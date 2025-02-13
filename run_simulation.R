@@ -125,7 +125,8 @@ system.time({
     grace_pd_wks = config$grace_pd_wks,
     denom_model_formula = config$propensity_formulas$denom_model_formula,
     num_model_formula = config$propensity_formulas$num_model_formula,
-    right_cens_model_formula = config$propensity_formulas$right_cens_model_formula
+    right_cens_model_formula = config$propensity_formulas$right_cens_model_formula,
+    skip_cens_for_tb = config$skip_cens_for_tb
   )
 })
 

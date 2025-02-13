@@ -50,6 +50,7 @@ haiti:
     - "splines::ns(wk, 3) + z"
   n_boot: 1000
   run_bootstrap: TRUE
+  skip_cens_for_tb: TRUE
 
 sub_haiti:
   weekly_records:

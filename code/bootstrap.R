@@ -62,7 +62,8 @@ try_one_bootstrap <- function(
     msm_formulas_tb = "splines::ns(wk, 3) + z",
     msm_formulas_death = "splines::ns(wk, 3) + z",
     msm_formulas_death_for_tb = msm_formulas_death,
-    admin_cens_wks = 52 * 2) {
+    admin_cens_wks = 52 * 2,
+    skip_cens_for_tb = FALSE) {
     tryCatch(
         {
             return(
@@ -75,7 +76,8 @@ try_one_bootstrap <- function(
                     msm_formulas_tb = msm_formulas_tb,
                     msm_formulas_death = msm_formulas_death,
                     msm_formulas_death_for_tb = msm_formulas_death_for_tb,
-                    admin_cens_wks = admin_cens_wks
+                    admin_cens_wks = admin_cens_wks,
+                    skip_cens_for_tb = skip_cens_for_tb
                 )
             )
         },
@@ -105,6 +107,7 @@ do_one_bootstrap <- function(
     msm_formulas_death = "splines::ns(wk, 3) + z",
     msm_formulas_death_for_tb = msm_formulas_death,
     admin_cens_wks = 52 * 2,
+    skip_cens_for_tb = FALSE, 
     ...) {
     
 	sampled_ids <- sample(unique(weekly_records_data$id), replace = TRUE)
@@ -126,7 +129,8 @@ do_one_bootstrap <- function(
         denom_model_formula = denom_model_formula,
         num_model_formula = num_model_formula,
         right_cens_model_formula = right_cens_model_formula,
-        return_models = FALSE
+        return_models = FALSE,
+        skip_cens_for_tb = skip_cens_for_tb
     )
 
     cf_init_dist <- compute_cf_init_dist(
@@ -208,7 +212,8 @@ run_bootstrap <- function(
     msm_formulas_tb = "splines::ns(wk, 3) + z",
     msm_formulas_death = "splines::ns(wk, 3) + z",
     msm_formulas_death_for_tb = msm_formulas_death,
-    admin_cens_wks = 52 * 2) {
+    admin_cens_wks = 52 * 2,
+    skip_cens_for_tb = FALSE) {
     
 	# bootstrap_results <-
     #     future.apply::future_replicate(
@@ -244,6 +249,7 @@ run_bootstrap <- function(
       msm_formulas_death = msm_formulas_death,
       msm_formulas_death_for_tb = msm_formulas_death_for_tb,
       admin_cens_wks = admin_cens_wks,
+      skip_cens_for_tb = skip_cens_for_tb,
       future.globals = c("weekly_records_data", 
                          "fit_propensity_models",
                          "create_cloned_data_set",
