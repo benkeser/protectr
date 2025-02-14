@@ -12,10 +12,6 @@
 # For initial debugging scratch file
 options(echo = TRUE)
 
-# increase size allowed future (default 500mb)
-options(future.globals.maxSize = 5 * 1024^3) # 5 GB
-options(future.globals.onReference = "ignore")
-
 # Path to installed packages on cluster
 .libPaths(c("~/Rlibs", "/apps/R/4.4.0/lib64/R/site/library", .libPaths()))
 
@@ -23,7 +19,6 @@ here::i_am("run_bootstrap.R")
 
 library(tidyverse)
 library(fastverse)
-library(future.apply)
 library(progressr)
 
 source(here::here("code/create_weekly_records.R"))
