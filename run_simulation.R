@@ -1,12 +1,11 @@
 # --------------------------------------------------------------------------------
-#             Main R script to run PROTECT analysis on HPC Cluster
+#    Main R script to run PROTECT analysis for point estimates on HPC Cluster
 # 0. Set desired settings in config.yml
 # 1. Create data
 # 2. Subset people
 # 3. Fit propensity models
 # 4. Cloning process
 # 5. MSM models
-# 6. Bootstrap
 # --------------------------------------------------------------------------------
 
 # For initial debugging scratch file
@@ -18,9 +17,6 @@ options(future.globals.onReference = "ignore")
 
 # Path to installed packages on cluster
 .libPaths(c("~/Rlibs", "/apps/R/4.4.0/lib64/R/site/library", .libPaths()))
-# .libPaths("/apps/R/4.4.0/lib64/R/site/library")
-
-.libPaths()
 
 here::i_am("run_simulation.R")
 
@@ -38,17 +34,14 @@ source(here::here("code/compute_cf_init_dist.R"))
 source(here::here("code/create_cloned_data_set.R"))
 source(here::here("code/fit_msm.R"))
 source(here::here("code/compute_cuminc.R"))
-source(here::here("code/bootstrap.R"))
 
 # Setup parallelization
+# (Now only used for creating weekly records data)
 
 # NOTE on the cluster this detects total cores on the node, not necessarily the ones that have been allocated by the scheduler
 # Opt for parallelly package instead, request appropriate number of nodes allocated in bash script
-# ncores <- parallel::detectCores()
 ncores <- parallelly::availableCores()
-#ncores_for_future <- max(ncores - 1, 1)
 future::plan("multicore", workers = ncores)
-#future::plan("multisession", workers = ncores)
 
 # 0. Get settings from config file ----------------------------------------------------------
 setting <- Sys.getenv("SETTING")
@@ -70,7 +63,7 @@ if (file.exists(here::here(paste0("data/", setting, "_weekly_records_data.rds"))
   # Read in raw data
   dat <- readRDS(here::here(paste0("data/", config$weekly_records$data_name)))
 
-  # temp to track time for creating weekly records
+  # track time for creating weekly records
   system.time({
     # Create weekly record data
     weekly_records_data <- create_weekly_record_data(
@@ -118,7 +111,6 @@ if (!is.na(config$admin_cens_wk)) {
 
 # 3. Fitting propensity scores --------------------------------------------------------------
 
-
 system.time({
   propensity_output <- fit_propensity_models(
     weekly_records_data = weekly_records_data,
@@ -130,7 +122,7 @@ system.time({
   )
 })
 
-# save later because need weekly records data with weights
+# wait to save because need for cloning step
 
 # 4. Cloning procedure -----------------------------------------------------------------------
 
@@ -203,34 +195,4 @@ for (i in seq_along(msm_formula_list)) {
 saveRDS(
   msm_formula_list,
   here::here(paste0("results/", setting, "/msm_formula_list_", setting, ".rds"))
-)
-
-# 6. Bootstrap ----------------------------------------------------------------
-
-system.time({
-  bootstrap_results <- run_bootstrap(
-    nboot = config$n_boot,
-    weekly_records_data = weekly_records_data,
-    grace_pd_wks = config$grace_pd_wks,
-    denom_model_formula = config$propensity_formulas$denom_model_formula,
-    num_model_formula = config$propensity_formulas$num_model_formula,
-    right_cens_model_formula = config$propensity_formulas$right_cens_model_formula,
-    admin_cens_wks = config$admin_cens_wk,
-    msm_formulas_tb = config$msm_formulas,
-    msm_formulas_death = config$msm_formulas,
-    msm_formulas_death_for_tb = config$msm_formulas
-  )
-})
-
-saveRDS(
-  bootstrap_results,
-  here::here(paste0("results/", setting, "/bootstrap_results_", setting, ".rds"))
-)
-
-# Get bootstrap CI
-bootstrap_ci <- get_bootstrap_ci(bootstrap_results)
-
-saveRDS(
-  bootstrap_ci,
-  here::here(paste0("results/", setting, "/bootstrap_ci_", setting, ".rds"))
 )
