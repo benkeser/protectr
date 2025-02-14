@@ -8,8 +8,7 @@ module load R/4.4.0
 
 export PATH=/apps/R/4.4.0/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin
  
-sbatch 
-  --array=1
+sbatch --array=1 \
   --partition=$PARTITION \
   --cpus-per-task=1 \
   --mem-per-cpu=10G \
