@@ -81,7 +81,7 @@ nigeria:
   run_bootstrap: TRUE
   skip_cens_for_tb: FALSE
 
-  uganda:
+uganda:
   weekly_records:
     data_name: "uganda_dat.RDS"
     baseline_covariates:
@@ -109,7 +109,7 @@ nigeria:
   run_bootstrap: TRUE
   skip_cens_for_tb: FALSE
 
-  ukraine:
+ukraine:
   weekly_records:
     data_name: "ukraine_dat.RDS"
     baseline_covariates:
@@ -136,7 +136,7 @@ nigeria:
   run_bootstrap: TRUE
   skip_cens_for_tb: FALSE
 
-  zimbabwe:
+zimbabwe:
   weekly_records:
     data_name: "zimbabwe_dat.RDS"
     baseline_covariates:
