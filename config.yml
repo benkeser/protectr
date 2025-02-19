@@ -60,7 +60,7 @@ nigeria:
       - "viral_load"
       - "who_stage_visit"
       - "age"
-      - "facility"
+      - "state"
       - "sex"
       - "who_stage_enroll"
       - "alcohol"
@@ -72,9 +72,9 @@ nigeria:
   admin_cens_wk: 104
   grace_pd_wks: 8
   propensity_formulas:
-    num_model_formula: "wk + wk^2 + enroll_year + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symptoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + facility + sex + who_stage_enroll + alcohol"
-    denom_model_formula: "splines::ns(wk, 3) + enroll_year + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symptoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + facility + sex + who_stage_enroll + alcohol"
-    right_cens_model_formula: "splines::ns(wk, 3) + enroll_year + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symptoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + facility + sex + who_stage_enroll + tpt_init + alcohol"
+    num_model_formula: "wk + wk^2 + enroll_year + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symptoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + state + sex + who_stage_enroll + alcohol"
+    denom_model_formula: "splines::ns(wk, 3) + enroll_year + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symptoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + state + sex + who_stage_enroll + alcohol"
+    right_cens_model_formula: "splines::ns(wk, 3) + enroll_year + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symptoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + state + sex + who_stage_enroll + tpt_init + alcohol"
   msm_formulas:
     - "splines::ns(wk, 3) + z"
   n_boot: 1000
@@ -144,6 +144,7 @@ zimbabwe:
       - "viral_load"
       - "who_stage_visit"
       - "age"
+      - "district"
       - "sex"
       - "who_stage_enroll"
     k: 3
@@ -154,9 +155,9 @@ zimbabwe:
   admin_cens_wk: 104
   grace_pd_wks: 8
   propensity_formulas:
-    num_model_formula: "wk + wk^2 + enroll_year + art_init + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + sex + who_stage_enroll"
-    denom_model_formula: "splines::ns(wk, 3) + enroll_year + art_init + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + sex + who_stage_enroll"
-    right_cens_model_formula: "splines::ns(wk, 3) + enroll_year + art_init + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + sex + who_stage_enroll + tpt_init"
+    num_model_formula: "wk + wk^2 + enroll_year + art_init + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + district + sex + who_stage_enroll"
+    denom_model_formula: "splines::ns(wk, 3) + enroll_year + art_init + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + district + sex + who_stage_enroll"
+    right_cens_model_formula: "splines::ns(wk, 3) + enroll_year + art_init + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + district + sex + who_stage_enroll + tpt_init"
   msm_formulas:
     - "splines::ns(wk, 3) + z"
   n_boot: 1000
