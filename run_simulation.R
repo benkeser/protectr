@@ -131,7 +131,6 @@ cloned_data_sets <- create_cloned_data_set(
 )
 
 # Null out parts of propensity_output no longer needed & save
-propensity_output$weekly_records_data <- NULL
 propensity_output[["models"]][["denom_model"]]$qr <- NULL
 propensity_output[["models"]][["num_model"]]$qr <- NULL
 propensity_output[["models"]][["cens_model_tb"]]$qr <- NULL
