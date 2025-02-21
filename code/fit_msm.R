@@ -33,13 +33,14 @@ fit_msm <- function(
 			weights = wt_k,
 			corstr = "independence"
 		)
-		msm_fit <- strip_glm(msm_fit)
+		# msm_fit <- strip_glm(msm_fit)
 	}
 
 	msm_coef <- msm_fit$coefficients
 
 	if(return_msm_vcov){
 		msm_vcov <- vcov(msm_fit)
+		msm_fit <- strip_glm(msm_fit)
 	}else{
 		msm_vcov <- NULL
 	}
