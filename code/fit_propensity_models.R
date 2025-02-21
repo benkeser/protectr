@@ -236,7 +236,7 @@ fit_propensity_models <- function(
 	fitted_values <- predict(cens_model_death, newdata = weekly_records_data, type = "response")
 
 	cens_model_death <- strip_glm(cens_model_death)
-	
+
 	uncens_probs <- c(1, 1 - fitted_values[1:(length(fitted_values)-1)])
 	uncens_probs[weekly_records_data$wk == 1] <- 1
 
@@ -363,8 +363,13 @@ predict.strip_glm <- function(object, newdata, ...){
   
   terms_obj <- delete.response(terms(object))
   model_vars <- all.vars(terms_obj)
-  newdata_filtered <- newdata[, intersect(names(newdata), model_vars), with = FALSE]
 
+  if (inherits(newdata, "data.table")) {
+    newdata_filtered <- newdata[, intersect(names(newdata), model_vars), with = FALSE]
+  } else {
+    newdata_filtered <- newdata[, intersect(names(newdata), model_vars), drop = FALSE]
+  }
+  
   mf <- model.frame(terms_obj, data = newdata_filtered, xlev = object$xlevels)
   X <- model.matrix(terms_obj, data = mf)
   
