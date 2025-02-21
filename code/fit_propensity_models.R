@@ -333,6 +333,31 @@ strip_glm <- function(model) {
 
   attr(model$terms,".Environment") = c()
   attr(model$formula,".Environment") = c()
+  model$qr = c()
 
+  class(model) <- "strip_glm"
   return(model)
 }
+
+predict.strip_glm <- function(object, newdata, ...){
+  coefs <- object$coefficients
+  family <- object$family
+  linkinv <- family$linkinv
+  
+  terms_obj <- terms(object) 
+  mf <- model.frame(terms_obj, data = newdata, xlev = object$xlevels)
+  X <- model.matrix(terms_obj, data = mf)
+  
+  # Ensure compatibility between model coefficients and new design matrix
+  missing_coefs <- setdiff(names(coefs), colnames(X))
+  if (length(missing_coefs) > 0) {
+    stop("Missing variables in newdata: ", paste(missing_coefs, collapse = ", "))
+  }
+  
+  eta <- X %*% coefs
+  predictions <- if (!is.null(linkinv)) linkinv(eta) else eta  # Identity link fallback
+  
+  return(predictions)
+}
+
+
