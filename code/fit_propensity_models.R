@@ -351,8 +351,11 @@ predict.strip_glm <- function(object, newdata, ...){
   family <- object$family
   linkinv <- family$linkinv
   
-  terms_obj <- terms(object) 
-  mf <- model.frame(terms_obj, data = newdata, xlev = object$xlevels)
+  terms_obj <- delete.response(terms(object))
+  model_vars <- all.vars(terms_obj)
+  newdata_filtered <- newdata[, intersect(names(newdata), model_vars), drop = FALSE]
+
+  mf <- model.frame(terms_obj, data = newdata_filtered, xlev = object$xlevels)
   X <- model.matrix(terms_obj, data = mf)
   
   # Ensure compatibility between model coefficients and new design matrix
@@ -364,7 +367,21 @@ predict.strip_glm <- function(object, newdata, ...){
   eta <- X %*% coefs
   predictions <- if (!is.null(linkinv)) linkinv(eta) else eta  # Identity link fallback
   
-  return(predictions)
+  return(as.numeric(predictions))
 }
 
+## test code
+# n <- 1000
+# x <- rnorm(n)
+# y <- rbinom(n, 1, plogis(x^2 - x))
+# fit_data <- data.frame(x, y)
+# fit <- glm(
+# 	paste0("y ~ ", "splines::ns(x, df = 3)"), 
+# 	family = binomial(),
+# 	data = fit_data
+# )
+# strip_fit <- strip_glm(fit)
+# pred_data <- data.frame(x = seq(-2, 2, length = n))
 
+# pred_fit <- predict(fit, newdata = pred_data, type = "response")
+# pred_strip_fit <- predict(strip_fit, newdata = pred_data, type = "response")
