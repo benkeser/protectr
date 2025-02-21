@@ -146,6 +146,8 @@ saveRDS(
 # iterate through all formulas specified in msm_formulas in configuration file
 msm_formula_list <- vector("list", length = length(config$msm_formulas))
 
+msm_gee <- config$msm_gee
+
 for (i in 1:length(config$msm_formulas)) {
   msm_formula <- config$msm_formulas[[i]]
 
@@ -153,24 +155,24 @@ for (i in 1:length(config$msm_formulas)) {
     cloned_data_set = cloned_data_sets$tb,
     msm_formula = msm_formula,
     return_msm_model = TRUE,
-    gee = FALSE,
-    return_msm_vcov = FALSE
+    gee = msm_gee,
+    return_msm_vcov = msm_gee
   )
 
   msm_fit_death <- fit_msm(
     cloned_data_set = cloned_data_sets$death,
     msm_formula = msm_formula,
     return_msm_model = TRUE,
-    gee = FALSE,
-    return_msm_vcov = FALSE
+    gee = msm_gee,
+    return_msm_vcov = msm_gee
   )
 
   msm_fit_death_for_tb <- fit_msm(
     cloned_data_set = cloned_data_sets$death_for_tb,
     msm_formula = msm_formula,
     return_msm_model = TRUE,
-    gee = FALSE,
-    return_msm_vcov = FALSE
+    gee = msm_gee,
+    return_msm_vcov = msm_gee
   )
 
   fit_models <- list(
@@ -183,15 +185,24 @@ for (i in 1:length(config$msm_formulas)) {
   msm_formula_list[[i]] <- fit_models
 }
 
-# Combine MSMs and null out parts no longer needed
-for (i in seq_along(msm_formula_list)) {
-  msm_formula_list[[i]]$msm_fit_tb$msm_model$qr <- NULL
-  msm_formula_list[[i]]$msm_fit_death$msm_model$qr <- NULL
-  msm_formula_list[[i]]$msm_fit_death_for_tb$msm_model$qr <- NULL
-}
+if(!msm_gee){
+  # Combine MSMs and null out parts no longer needed
+  for (i in seq_along(msm_formula_list)) {
+    msm_formula_list[[i]]$msm_fit_tb$msm_model$qr <- NULL
+    msm_formula_list[[i]]$msm_fit_death$msm_model$qr <- NULL
+    msm_formula_list[[i]]$msm_fit_death_for_tb$msm_model$qr <- NULL
+  }
 
-# Save MSMs
-saveRDS(
-  msm_formula_list,
-  here::here(paste0("results/", setting, "/msm_formula_list_", setting, ".rds"))
-)
+  # Save MSMs
+  saveRDS(
+    msm_formula_list,
+    here::here(paste0("results/", setting, "/msm_formula_list_", setting, ".rds"))
+  )
+
+} else{
+  # Save MSMs (indicate GEE)
+  saveRDS(
+    msm_formula_list,
+    here::here(paste0("results/", setting, "/msm_formula_list_", setting, "_gee.rds"))
+  )
+}

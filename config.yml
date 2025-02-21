@@ -48,6 +48,7 @@ haiti:
     right_cens_model_formula: "splines::ns(wk, 3) + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symptoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + enroll_year + age + district_facility + district_patient + sex + who_stage_enroll + who_stage_visit + tpt_init"
   msm_formulas:
     - "splines::ns(wk, 3) + z"
+  msm_gee: TRUE
   n_boot: 1000
   run_bootstrap: TRUE
   skip_cens_for_tb: TRUE
@@ -77,6 +78,7 @@ nigeria:
     right_cens_model_formula: "splines::ns(wk, 3) + enroll_year + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symptoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + state + sex + who_stage_enroll + tpt_init + alcohol"
   msm_formulas:
     - "splines::ns(wk, 3) + z"
+  msm_gee: TRUE
   n_boot: 1000
   run_bootstrap: TRUE
   skip_cens_for_tb: FALSE
@@ -105,6 +107,7 @@ uganda:
     right_cens_model_formula: "splines::ns(wk, 3) + enroll_year + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + region + sex + who_stage_enroll + tpt_init"
   msm_formulas:
     - "splines::ns(wk, 3) + z"
+  msm_gee: TRUE
   n_boot: 1000
   run_bootstrap: TRUE
   skip_cens_for_tb: FALSE
@@ -132,6 +135,7 @@ ukraine:
     right_cens_model_formula: "splines::ns(wk, 3) + enroll_year + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + age + alcohol + have_cd4 + I(have_cd4 * cd4_count) + imprisonment + sex + tpt_init"
   msm_formulas:
     - "splines::ns(wk, 3) + z"
+  msm_gee: TRUE
   n_boot: 1000
   run_bootstrap: TRUE
   skip_cens_for_tb: FALSE
@@ -160,6 +164,7 @@ zimbabwe:
     right_cens_model_formula: "splines::ns(wk, 3) + enroll_year + art_init + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + district + sex + who_stage_enroll + tpt_init"
   msm_formulas:
     - "splines::ns(wk, 3) + z"
+  msm_gee: TRUE
   n_boot: 1000
   run_bootstrap: TRUE
   skip_cens_for_tb: FALSE
@@ -189,6 +194,7 @@ sub_haiti:
     right_cens_model_formula: "splines::ns(wk, 3) + art_init + art_adherence_measured_visit_k + I(art_adherence_measured_visit_k * art_adherence_visit_k) + tb_symptoms_measured_visit_k + I(tb_symptoms_measured_visit_k * tb_symptoms_visit_k) + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + enroll_year + age + district_facility + district_patient + sex + who_stage_enroll + who_stage_visit + tpt_init"
   msm_formulas:
     - "splines::ns(wk, 3) + z"
+  msm_gee: TRUE
   n_boot: 100
   run_bootstrap: TRUE
  
