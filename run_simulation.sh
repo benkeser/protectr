@@ -9,10 +9,11 @@ module load R/4.4.0
 export PATH=/apps/R/4.4.0/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin
  
 sbatch --partition=$PARTITION \
+  --priority=10000 \
   --nodes=1 \
   --ntasks-per-node=1 \
-  --cpus-per-task=4 \
-  --mem-per-cpu=46G \
+  --cpus-per-task=24 \
+  --mem-per-cpu=6G \
   --job-name=tb_hiv \
   --output=/projects/dbenkes/allison/protectr/scratch/${SETTING}_%J.out \
   --export=SETTING=$SETTING \
