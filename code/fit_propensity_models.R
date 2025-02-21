@@ -353,7 +353,7 @@ predict.strip_glm <- function(object, newdata, ...){
   
   terms_obj <- delete.response(terms(object))
   model_vars <- all.vars(terms_obj)
-  newdata_filtered <- newdata[, intersect(names(newdata), model_vars), drop = FALSE]
+  newdata_filtered <- newdata[, intersect(names(newdata), model_vars), with = FALSE]
 
   mf <- model.frame(terms_obj, data = newdata_filtered, xlev = object$xlevels)
   X <- model.matrix(terms_obj, data = mf)
