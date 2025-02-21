@@ -60,13 +60,15 @@ fit_propensity_models <- function(
 	)
 
 	# strip glm immediately to avoid memory issues
-	denom_model <- strip_glm(denom_model)
+	# denom_model <- strip_glm(denom_model)
 
 
     # add placeholder tpt_outcome variable to weekly records data for prediction from strip_glm obj
-	weekly_records_data$tpt_outcome <- 0
+	# weekly_records_data$tpt_outcome <- 0
 
 	weekly_records_data[, denom_model_prediction := predict(denom_model, newdata = weekly_records_data, type = "response")]
+
+	denom_model <- strip_glm(denom_model)
 
 	# TPT weights
 	# weights for TB outcome
@@ -138,9 +140,11 @@ fit_propensity_models <- function(
 		data = num_model_data
 	)
 
-	num_model <- strip_glm(num_model)
+	# num_model <- strip_glm(num_model)
 
 	weekly_records_data[, num_model_prediction := predict(num_model, newdata = weekly_records_data, type = "response")]
+
+	num_model <- strip_glm(num_model)
 
 	# if not initiated prior to the end of the grace period, prob of
 	# initiating in last week of grace period = 1
@@ -198,9 +202,12 @@ fit_propensity_models <- function(
 			data = cens_model_data_tb
 		)
 
-		cens_model_tb <- strip_glm(cens_model_tb)
+		# cens_model_tb <- strip_glm(cens_model_tb)
 
 		fitted_values <- predict(cens_model_tb, newdata = weekly_records_data, type = "response")
+
+		cens_model_tb <- strip_glm(cens_model_tb)
+
 		uncens_probs <- c(1, 1 - fitted_values[1:(length(fitted_values)-1)])
 		uncens_probs[weekly_records_data$wk == 1] <- 1
 
@@ -224,9 +231,12 @@ fit_propensity_models <- function(
 		data = cens_model_data_death
 	)
 
-	cens_model_death <- strip_glm(cens_model_death)
+	# cens_model_death <- strip_glm(cens_model_death)
 
 	fitted_values <- predict(cens_model_death, newdata = weekly_records_data, type = "response")
+
+	cens_model_death <- strip_glm(cens_model_death)
+	
 	uncens_probs <- c(1, 1 - fitted_values[1:(length(fitted_values)-1)])
 	uncens_probs[weekly_records_data$wk == 1] <- 1
 
