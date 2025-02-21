@@ -149,7 +149,8 @@ zimbabwe:
       - "who_stage_visit"
       - "age"
       - "district"
-      - "sex"
+      - "male"
+      - "female"
       - "who_stage_enroll"
     k: 3
     admin_cens_wks: 104
@@ -159,9 +160,9 @@ zimbabwe:
   admin_cens_wk: 104
   grace_pd_wks: 8
   propensity_formulas:
-    num_model_formula: "wk + wk^2 + enroll_year + art_init + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + district + sex + who_stage_enroll"
-    denom_model_formula: "splines::ns(wk, 3) + enroll_year + art_init + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + district + sex + who_stage_enroll"
-    right_cens_model_formula: "splines::ns(wk, 3) + enroll_year + art_init + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + district + sex + who_stage_enroll + tpt_init"
+    num_model_formula: "wk + wk^2 + enroll_year + art_init + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + district + male + female + who_stage_enroll"
+    denom_model_formula: "splines::ns(wk, 3) + enroll_year + art_init + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + district + male + female + who_stage_enroll"
+    right_cens_model_formula: "splines::ns(wk, 3) + enroll_year + art_init + viral_load_measured_visit_k + I(viral_load_measured_visit_k * viral_load_visit_k) + who_stage_visit + age + have_cd4 + I(have_cd4 * cd4_count) + district + male + female + who_stage_enroll + tpt_init"
   msm_formulas:
     - "splines::ns(wk, 3) + z"
   msm_gee: TRUE
