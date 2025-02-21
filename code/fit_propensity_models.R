@@ -62,6 +62,10 @@ fit_propensity_models <- function(
 	# strip glm immediately to avoid memory issues
 	denom_model <- strip_glm(denom_model)
 
+
+    # add placeholder tpt_outcome variable to weekly records data for prediction from strip_glm obj
+	weekly_records_data$tpt_outcome <- 0
+
 	weekly_records_data[, denom_model_prediction := predict(denom_model, newdata = weekly_records_data, type = "response")]
 
 	# TPT weights
@@ -284,6 +288,9 @@ fit_propensity_models <- function(
 	
 	weekly_records_data_wts <- rbindlist(wts_by_id)
 	
+	# remove temp tpt_outcome variable that was added for prediction
+	weekly_records_data[,tpt_outcome:=NULL]
+
 	weekly_records_data_wts <- merge(
 	  weekly_records_data, 
 	  weekly_records_data_wts, 
