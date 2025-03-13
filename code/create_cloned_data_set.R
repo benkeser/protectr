@@ -37,9 +37,10 @@ create_cloned_data_set <- function(
 	}
 	
 	if("death" %in% endpoint){
-		weekly_records_death_z1 <- propensity_output$weekly_records_data[
-		  (tpt_start_wk <= propensity_output$grace_pd_wks) |
-	    ((tpt_start_wk > propensity_output$grace_pd_wks) & (wk <= propensity_output$grace_pd_wks))
+		weekly_records_death_z1 <- propensity_output$weekly_records_data[,
+			.SD[(wk <= pmin(death_wk, last_visit_wk) & tpt_start_wk <= propensity_output$grace_pd_wks) |
+				  ((tpt_start_wk > propensity_output$grace_pd_wks) & (wk <= propensity_output$grace_pd_wks) & (wk <= pmin(death_wk, last_visit_wk)))],
+			by = id
 	  ]
 	  weekly_records_death_z1[, z := 1]
 
@@ -73,9 +74,10 @@ create_cloned_data_set <- function(
 	}
 
 	if("death" %in% endpoint){
-		weekly_records_death_z0 <- propensity_output$weekly_records_data[
-		  ((tpt_start_wk < 99999) & (wk <= tpt_start_wk)) |
-		  (tpt_start_wk == 99999)
+		weekly_records_death_z0 <- propensity_output$weekly_records_data[,
+		  .SD[((tpt_start_wk < 99999) & (wk <= tpt_start_wk) & (wk <= pmin(death_wk, last_visit_wk))) |
+		  	  ((tpt_start_wk == 99999) & (wk <= pmin(death_wk, last_visit_wk)))],
+		  by = id
 		]
 		weekly_records_death_z0[, z := 0]
 
