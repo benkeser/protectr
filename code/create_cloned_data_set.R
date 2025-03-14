@@ -38,8 +38,8 @@ create_cloned_data_set <- function(
 	
 	if("death" %in% endpoint){
 		weekly_records_death_z1 <- propensity_output$weekly_records_data[,
-			.SD[(wk <= pmin(death_wk, last_visit_wk) & tpt_start_wk <= propensity_output$grace_pd_wks) |
-				  ((tpt_start_wk > propensity_output$grace_pd_wks) & (wk <= propensity_output$grace_pd_wks) & (wk <= pmin(death_wk, last_visit_wk)))],
+			.SD[((((death_wk == 99999) & (wk <= last_visit_wk)) | ((death_wk < 99999) & (wk <= death_wk))) & tpt_start_wk <= propensity_output$grace_pd_wks) |
+				  ((tpt_start_wk > propensity_output$grace_pd_wks) & (wk <= propensity_output$grace_pd_wks) & (((death_wk == 99999) & (wk <= last_visit_wk)) | ((death_wk < 99999) & (wk <= death_wk))))],
 			by = id
 	  ]
 	  weekly_records_death_z1[, z := 1]
@@ -50,8 +50,8 @@ create_cloned_data_set <- function(
 
 	if("death_for_tb" %in% endpoint){
 		weekly_records_death_for_tb_z1 <- propensity_output$weekly_records_data[,
-		  .SD[((tpt_start_wk <= propensity_output$grace_pd_wks) & (wk <= pmin(death_wk, right_cens_wk_tb)) & (wk <= pmin(tb_wk, right_cens_wk_tb))) |
-	    		((tpt_start_wk > propensity_output$grace_pd_wks) & (wk <= propensity_output$grace_pd_wks) & (wk <= pmin(death_wk, right_cens_wk_tb)) & (wk <= pmin(tb_wk, right_cens_wk_tb)))],
+		  .SD[((tpt_start_wk <= propensity_output$grace_pd_wks) & (((death_wk == 99999) & (wk <= last_visit_wk)) | ((death_wk < 99999) & (wk <= death_wk))) & (wk <= pmin(tb_wk, right_cens_wk_tb))) |
+	    		((tpt_start_wk > propensity_output$grace_pd_wks) & (wk <= propensity_output$grace_pd_wks) & (((death_wk == 99999) & (wk <= last_visit_wk)) | ((death_wk < 99999) & (wk <= death_wk))) & (wk <= pmin(tb_wk, right_cens_wk_tb)))],
 	    by = id
 	  ]
 	  weekly_records_death_for_tb_z1[, z := 1]
@@ -75,8 +75,8 @@ create_cloned_data_set <- function(
 
 	if("death" %in% endpoint){
 		weekly_records_death_z0 <- propensity_output$weekly_records_data[,
-		  .SD[((tpt_start_wk < 99999) & (wk <= tpt_start_wk) & (wk <= pmin(death_wk, last_visit_wk))) |
-		  	  ((tpt_start_wk == 99999) & (wk <= pmin(death_wk, last_visit_wk)))],
+		  .SD[((tpt_start_wk < 99999) & (wk <= tpt_start_wk) & (((death_wk == 99999) & (wk <= last_visit_wk)) | ((death_wk < 99999) & (wk <= death_wk)))) |
+		  	  ((tpt_start_wk == 99999) & (((death_wk == 99999) & (wk <= last_visit_wk)) | ((death_wk < 99999) & (wk <= death_wk))))],
 		  by = id
 		]
 		weekly_records_death_z0[, z := 0]
@@ -87,8 +87,8 @@ create_cloned_data_set <- function(
 
 	if("death_for_tb" %in% endpoint){
 		weekly_records_death_for_tb_z0 <- propensity_output$weekly_records_data[,
-		  .SD[((tpt_start_wk < 99999) & (wk <= tpt_start_wk)) & (wk <= min(death_wk, right_cens_wk_tb)) & (wk <= min(tb_wk, right_cens_wk_tb)) |
-		  		((tpt_start_wk == 99999) & (wk <= min(death_wk, right_cens_wk_tb)) & (wk <= min(tb_wk, right_cens_wk_tb)))],
+		  .SD[((tpt_start_wk < 99999) & (wk <= tpt_start_wk)) & (((death_wk == 99999) & (wk <= last_visit_wk)) | ((death_wk < 99999) & (wk <= death_wk))) & (wk <= min(tb_wk, right_cens_wk_tb)) |
+		  		((tpt_start_wk == 99999) & (((death_wk == 99999) & (wk <= last_visit_wk)) | ((death_wk < 99999) & (wk <= death_wk))) & (wk <= min(tb_wk, right_cens_wk_tb)))],
 		  by = id
 		]
 		weekly_records_death_for_tb_z0[, z := 0]
@@ -160,23 +160,34 @@ truncate_wts <- function(weekly_records_data, tb, tpt){
   # Filter rows where wks_to_add > 0
   wk_summary <- wk_summary[wks_to_add > 0]
   
-  # Creating new rows (without using foreach)
+  # Creating new rows
   rows_add <- rbindlist(lapply(1:nrow(wk_summary), function(i) {
     this_id <- wk_summary$id[i]
     wks_to_add <- wk_summary$wks_to_add[i]
     last_wk <- wk_summary$wks[i]
-    
+
     wk <- seq(from = last_wk + 1, by = 1, length.out = wks_to_add)
     id <- rep(this_id, wks_to_add)
-    
-    if (tb == "yes") {
-      wt_values <- rep(0, wks_to_add)
-      data.table(id = id, wk = wk, wt_tpt_tb = wt_values)
+
+    if(tb == "yes"){
+      if(tpt == "yes"){
+        wt_tpt_tb <- rep(0, wks_to_add)
+        data.table(id = id, wk = wk, wt_tpt_tb = wt_tpt_tb)
+      } else {
+        wt_cntrl_tb <- rep(0, wks_to_add)
+        data.table(id = id, wk = wk, wt_cntrl_tb = wt_cntrl_tb)
+      }
     } else {
-      wt_values <- rep(0, wks_to_add)
-      data.table(id = id, wk = wk, wt_cntrl_death = wt_values)
+      if(tpt == "yes"){
+        wt_tpt_death <- rep(0, wks_to_add)
+        data.table(id = id, wk = wk, wt_tpt_death = wt_tpt_death)
+      } else {
+        wt_cntrl_death <- rep(0, wks_to_add)
+        data.table(id = id, wk = wk, wt_cntrl_death = wt_cntrl_death)
+      }
     }
   }))
+  rm(wk_summary)
   
   # Combine with original data and compute truncation limits
   if (tpt == "yes") {
@@ -199,6 +210,19 @@ truncate_wts <- function(weekly_records_data, tb, tpt){
   # Calculate 99th percentile
   weekly_wts <- weekly_wts[, .(wt_trunc = quantile(get(names(weekly_wts)[3]), 0.99, na.rm = TRUE)), 
                            by = wk]
+  if(tpt == "yes"){
+    if(tb == "yes"){
+      weekly_wts[, wt_tpt_tb := NULL]
+    } else {
+      weekly_wts[, wt_tpt_death := NULL]
+    }
+  } else {
+    if(tb == "yes"){
+      weekly_wts[, wt_cntrl_tb := NULL]
+    } else {
+      weekly_wts[, wt_cntrl_death := NULL]
+    }
+  }
   
   # Merge with original data
   weekly_records_data <- merge(weekly_records_data, weekly_wts, by = "wk", all.x = TRUE)
