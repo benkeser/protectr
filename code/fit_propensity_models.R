@@ -126,6 +126,7 @@ fit_propensity_models <- function(
 	weekly_records_data[(wk > death_wk), prob_wt_denom_cntrl_death := 99999]
 	
 	weekly_records_data[(wk < tpt_start_wk & wk <= death_wk), prob_wt_denom_cntrl_death := 1 - denom_model_prediction]
+	weekly_records_data[(wk > tb_wk & wk <= death_wk), prob_wt_denom_cntrl_death := 1]
 
 	#----------------------------------------------
 	# NUMERATOR 
@@ -173,14 +174,12 @@ fit_propensity_models <- function(
 
 
 	weekly_records_data[, prob_wt_num_cntrl_tb := NA]
-	weekly_records_data[(wk > grace_pd_wks), prob_wt_num_cntrl_tb := 1]
 	weekly_records_data[(wk > tpt_start_wk), prob_wt_num_cntrl_tb := 0]
 	weekly_records_data[(wk > tb_wk), prob_wt_num_cntrl_tb := 0]
 	weekly_records_data[(wk < tpt_start_wk & wk <= tb_wk), prob_wt_num_cntrl_tb := 1]
 	weekly_records_data[(wk == tpt_start_wk & wk <= tb_wk), prob_wt_num_cntrl_tb := 0]
 
 	weekly_records_data[, prob_wt_num_cntrl_death := NA]
-	weekly_records_data[(wk > grace_pd_wks), prob_wt_num_cntrl_death := 1]
 	weekly_records_data[(wk > tpt_start_wk), prob_wt_num_cntrl_death := 0]
 	weekly_records_data[(wk > death_wk), prob_wt_num_cntrl_death := 0]
 	weekly_records_data[(wk < tpt_start_wk & wk <= death_wk), prob_wt_num_cntrl_death := 1]
