@@ -126,6 +126,7 @@ fit_propensity_models <- function(
 	weekly_records_data[(wk > death_wk), prob_wt_denom_cntrl_death := 99999]
 	
 	weekly_records_data[(wk < tpt_start_wk & wk <= death_wk), prob_wt_denom_cntrl_death := 1 - denom_model_prediction]
+	weekly_records_data[(wk > tb_wk & wk <= death_wk), prob_wt_denom_cntrl_death := 1]
 
 	#----------------------------------------------
 	# NUMERATOR 
