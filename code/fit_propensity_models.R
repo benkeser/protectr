@@ -98,8 +98,8 @@ fit_propensity_models <- function(
 	weekly_records_data[(wk >  grace_pd_wks) & (tpt_start_wk > grace_pd_wks) & (tpt_start_wk < 99999), prob_wt_denom_tpt_death := 99999]
   
   # people who get TB in the grace period and so never initiate TPT
-  weekly_records_data[(wk <= tb_wk) & (tb_wk <= grace_pd_wks), prob_wt_denom_tpt_death := 1 - denom_model_prediction]
-  weekly_records_data[(wk >  tb_wk) & (tb_wk <= grace_pd_wks), prob_wt_denom_tpt_death := 1]
+  weekly_records_data[(wk <= tb_wk) & (tb_wk <= grace_pd_wks) & (tb_wk < tpt_start_wk), prob_wt_denom_tpt_death := 1 - denom_model_prediction]
+  weekly_records_data[(wk >  tb_wk) & (tb_wk <= grace_pd_wks) & (tb_wk < tpt_start_wk), prob_wt_denom_tpt_death := 1]
   
   # people who either (get TB outside the grace period or never get TB) and never initiate TPT
   weekly_records_data[(wk <= grace_pd_wks) & (tb_wk > grace_pd_wks) & (tpt_start_wk == 99999), prob_wt_denom_tpt_death := 1 - denom_model_prediction]
@@ -118,6 +118,7 @@ fit_propensity_models <- function(
 	weekly_records_data[(wk < tpt_start_wk & wk <= tb_wk), prob_wt_denom_cntrl_tb := 1 - denom_model_prediction]
 
 
+
 	weekly_records_data[, prob_wt_denom_cntrl_death := 99999]
 	
 	# same logic as for cntrl_tb above
@@ -125,8 +126,7 @@ fit_propensity_models <- function(
 	weekly_records_data[(wk > death_wk), prob_wt_denom_cntrl_death := 99999]
 	
 	weekly_records_data[(wk < tpt_start_wk & wk <= death_wk), prob_wt_denom_cntrl_death := 1 - denom_model_prediction]
-	weekly_records_data[(wk > tb_wk), prob_wt_denom_cntrl_death := 1]
-	
+	weekly_records_data[(wk > tb_wk & wk <= death_wk), prob_wt_denom_cntrl_death := 1]
 
 	#----------------------------------------------
 	# NUMERATOR 
@@ -156,8 +156,8 @@ fit_propensity_models <- function(
 
 	# none of these weeks should receive any weight
 	weekly_records_data[(wk > tb_wk), prob_wt_num_tpt_tb := 0]
-	weekly_records_data[(wk <  tpt_start_wk & wk <= tb_wk & wk <= grace_pd_wks), prob_wt_num_tpt_tb := 1 - num_model_prediction]
-	weekly_records_data[(wk == tpt_start_wk & wk <= tb_wk & wk <= grace_pd_wks), prob_wt_num_tpt_tb := num_model_prediction]
+	weekly_records_data[(wk <  tpt_start_wk & wk <= tb_wk & wk < grace_pd_wks), prob_wt_num_tpt_tb := 1 - num_model_prediction]
+	weekly_records_data[(wk == tpt_start_wk & wk <= tb_wk & wk < grace_pd_wks), prob_wt_num_tpt_tb := num_model_prediction]
 
 
 	weekly_records_data[, prob_wt_num_tpt_death := 99999]
@@ -165,8 +165,8 @@ fit_propensity_models <- function(
 	weekly_records_data[(wk > tpt_start_wk), prob_wt_num_tpt_death := 1]
 
 	weekly_records_data[(wk > death_wk), prob_wt_num_tpt_death := 0]
-	weekly_records_data[(wk <  tpt_start_wk & wk <= death_wk & wk <= grace_pd_wks), prob_wt_num_tpt_death := 1 - num_model_prediction]
-	weekly_records_data[(wk == tpt_start_wk & wk <= death_wk & wk <= grace_pd_wks), prob_wt_num_tpt_death := num_model_prediction]
+	weekly_records_data[(wk <  tpt_start_wk & wk <= death_wk & wk < grace_pd_wks), prob_wt_num_tpt_death := 1 - num_model_prediction]
+	weekly_records_data[(wk == tpt_start_wk & wk <= death_wk & wk < grace_pd_wks), prob_wt_num_tpt_death := num_model_prediction]
 	# special care for tb cases in the grace period -- these are still "compatible" with
 	# our interventional TPT initiation distribution
 	weekly_records_data[(tb_wk <= grace_pd_wks & wk > tb_wk & wk <= death_wk), prob_wt_num_tpt_death := 1]
@@ -174,14 +174,12 @@ fit_propensity_models <- function(
 
 
 	weekly_records_data[, prob_wt_num_cntrl_tb := NA]
-	weekly_records_data[(wk > grace_pd_wks), prob_wt_num_cntrl_tb := 1]
 	weekly_records_data[(wk > tpt_start_wk), prob_wt_num_cntrl_tb := 0]
 	weekly_records_data[(wk > tb_wk), prob_wt_num_cntrl_tb := 0]
 	weekly_records_data[(wk < tpt_start_wk & wk <= tb_wk), prob_wt_num_cntrl_tb := 1]
 	weekly_records_data[(wk == tpt_start_wk & wk <= tb_wk), prob_wt_num_cntrl_tb := 0]
 
 	weekly_records_data[, prob_wt_num_cntrl_death := NA]
-	weekly_records_data[(wk > grace_pd_wks), prob_wt_num_cntrl_death := 1]
 	weekly_records_data[(wk > tpt_start_wk), prob_wt_num_cntrl_death := 0]
 	weekly_records_data[(wk > death_wk), prob_wt_num_cntrl_death := 0]
 	weekly_records_data[(wk < tpt_start_wk & wk <= death_wk), prob_wt_num_cntrl_death := 1]
@@ -290,8 +288,8 @@ fit_propensity_models <- function(
 	    # Compute weights
 	    data_chunk[, wt_tpt_tb := cumprod(prob_wt_num_tpt_tb / (prob_wt_denom_tpt_tb * prob_wt_cens_tb))]
 	    data_chunk[, wt_tpt_death := cumprod(prob_wt_num_tpt_death / (prob_wt_denom_tpt_death * prob_wt_cens_death))]
-	    data_chunk[, wt_cntrl_tb := cumprod(1 / (prob_wt_denom_cntrl_tb * prob_wt_cens_tb))]
-	    data_chunk[, wt_cntrl_death := cumprod(1 / (prob_wt_denom_cntrl_death * prob_wt_cens_death))]
+	    data_chunk[, wt_cntrl_tb := cumprod(prob_wt_num_cntrl_tb / (prob_wt_denom_cntrl_tb * prob_wt_cens_tb))]
+	    data_chunk[, wt_cntrl_death := cumprod(prob_wt_num_cntrl_death / (prob_wt_denom_cntrl_death * prob_wt_cens_death))]
 	    
 	    return(data_chunk[, .(idx, id, wt_tpt_tb, wt_tpt_death, wt_cntrl_tb, wt_cntrl_death)])
 	  }, sub_weekly = sub_weekly)
@@ -385,7 +383,7 @@ predict.strip_glm <- function(object, newdata, ...){
   return(as.numeric(predictions))
 }
 
-## test code
+# ## test code
 # n <- 1000
 # x <- rnorm(n)
 # y <- rbinom(n, 1, plogis(x^2 - x))
@@ -396,7 +394,7 @@ predict.strip_glm <- function(object, newdata, ...){
 # 	data = fit_data
 # )
 # strip_fit <- strip_glm(fit)
-# pred_data <- data.frame(x = seq(-2, 2, length = n))
+# pred_data <- datatable::data.table(x = seq(-2, 2, length = n))
 
 # pred_fit <- predict(fit, newdata = pred_data, type = "response")
 # pred_strip_fit <- predict(strip_fit, newdata = pred_data, type = "response")
