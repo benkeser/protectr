@@ -165,6 +165,22 @@ create_weekly_record_data <- function(
           weekly_records[j, (viral_load_variable) := viral_load_variables[[viral_load_variable]]]
         }
 
+        # variables summarizing WHO stage
+        if ("who_stage_visit" %in% colnames(dat)){
+          who_stage_variables <- summarize_who_stage(k_most_recent_visits)
+          for(who_stage_variable in names(who_stage_variables)){
+            weekly_records[j, (who_stage_variable) := who_stage_variables[[who_stage_variable]]]
+          }
+        }
+        
+        # variables summarizing weight
+        if ("weight_visit" %in% colnames(dat)){
+          weight_variables <- summarize_weight(k_most_recent_visits)
+          for(weight_variable in names(weight_variables)){
+            weekly_records[j, (weight_variable) := weight_variables[[weight_variable]]]
+          }
+        }
+
         visit_times_variables <- summarize_visit_times(
           all_prior_visit_dates = all_prior_visit_dates,
           visits_before_date = visits_before_date,
@@ -451,6 +467,116 @@ summarize_viral_load <- function(
       )
     }else{
       out$viral_load_visit_kminus2 <- 0
+    }
+  }
+  return(out)
+}
+
+summarize_wwho_stage <- function(
+    k_most_recent_visits
+){
+  out <- list(
+    who_stage_measured_visit_k = 0, 
+    who_stage_measured_visit_kminus1 = 0,
+    who_stage_measured_visit_kminus2 = 0,
+    who_stage_visit_k = 0,
+    who_stage_visit_kminus1 = 0,
+    who_stage_visit_kminus2 = 0
+  )
+  if(!is.null(k_most_recent_visits)){
+    n_visits <- nrow(k_most_recent_visits)
+    out$who_stage_measured_visit_k <- as.numeric(!is.na(
+      k_most_recent_visits[visit_date == max(visit_date), who_stage_visit]
+    ))
+    if(n_visits > 1){
+      out$who_stage_measured_visit_kminus1 <- as.numeric(!is.na(
+        k_most_recent_visits[visit_date == visit_date[order(visit_date)[n_visits - 1]], who_stage_visit]
+      ))
+    }else{
+      out$who_stage_measured_visit_kminus1 <- 0
+    }
+    if(n_visits > 2){
+      out$who_stage_measured_visit_kminus2 <- as.numeric(!is.na(
+        k_most_recent_visits[visit_date == visit_date[order(visit_date)[n_visits - 2]], who_stage_visit]
+      ))
+    }else{
+      out$who_stage_measured_visit_kminus2 <- 0
+    }
+  }
+  
+  if(!is.null(k_most_recent_visits)){
+    n_visits <- nrow(k_most_recent_visits)
+    out$who_stage_visit_k <- zero_if_missing(
+      k_most_recent_visits[visit_date == max(visit_date), who_stage_visit]
+    )
+    if(n_visits > 1){
+      out$who_stage_visit_kminus1 <- zero_if_missing(
+        k_most_recent_visits[visit_date == visit_date[order(visit_date)[n_visits - 1]], who_stage_visit]
+      )
+    }else{
+      out$who_stage_visit_kminus1 <- 0
+    }
+    if(n_visits > 2){
+      out$who_stage_visit_kminus2 <- zero_if_missing(
+        k_most_recent_visits[visit_date == visit_date[order(visit_date)[n_visits - 2]], who_stage_visit]
+      )
+    }else{
+      out$who_stage_visit_kminus2 <- 0
+    }
+  }
+  return(out)
+}
+
+summarize_weight <- function(
+    k_most_recent_visits
+){
+  out <- list(
+    weight_measured_visit_k = 0, 
+    weight_measured_visit_kminus1 = 0,
+    weight_measured_visit_kminus2 = 0,
+    weight_visit_k = 0,
+    weight_visit_kminus1 = 0,
+    weight_visit_kminus2 = 0
+  )
+  if(!is.null(k_most_recent_visits)){
+    n_visits <- nrow(k_most_recent_visits)
+    out$weight_measured_visit_k <- as.numeric(!is.na(
+      k_most_recent_visits[visit_date == max(visit_date), weight_visit]
+    ))
+    if(n_visits > 1){
+      out$weight_measured_visit_kminus1 <- as.numeric(!is.na(
+        k_most_recent_visits[visit_date == visit_date[order(visit_date)[n_visits - 1]], weight_visit]
+      ))
+    }else{
+      out$weight_measured_visit_kminus1 <- 0
+    }
+    if(n_visits > 2){
+      out$weight_measured_visit_kminus2 <- as.numeric(!is.na(
+        k_most_recent_visits[visit_date == visit_date[order(visit_date)[n_visits - 2]], weight_visit]
+      ))
+    }else{
+      out$weight_measured_visit_kminus2 <- 0
+    }
+  }
+  
+  if(!is.null(k_most_recent_visits)){
+    n_visits <- nrow(k_most_recent_visits)
+    out$weight_visit_k <- zero_if_missing(
+      k_most_recent_visits[visit_date == max(visit_date), weight_visit]
+    )
+    if(n_visits > 1){
+      out$weight_visit_kminus1 <- zero_if_missing(
+        k_most_recent_visits[visit_date == visit_date[order(visit_date)[n_visits - 1]], weight_visit]
+      )
+    }else{
+      out$weight_visit_kminus1 <- 0
+    }
+    if(n_visits > 2){
+      out$weight_visit_kminus2 <- zero_if_missing(
+        k_most_recent_visits[visit_date == visit_date[order(visit_date)[n_visits - 2]], weight_visit]
+      )
+    }else{
+      out$weight_visit_kminus2 <- 0
     }
   }
   return(out)
