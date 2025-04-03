@@ -472,7 +472,7 @@ summarize_viral_load <- function(
   return(out)
 }
 
-summarize_wwho_stage <- function(
+summarize_who_stage <- function(
     k_most_recent_visits
 ){
   out <- list(
