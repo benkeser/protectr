@@ -254,7 +254,9 @@ fit_propensity_models <- function(
 	                                      prob_wt_num_tpt_death,
 	                                      prob_wt_denom_tpt_death,
 	                                      prob_wt_cens_death,
+	                                      prob_wt_num_cntrl_tb,
 	                                      prob_wt_denom_cntrl_tb,
+	                                      prob_wt_num_cntrl_death,
 	                                      prob_wt_denom_cntrl_death)]
 	
 	# Avoid memory duplication by NOT splitting manually
