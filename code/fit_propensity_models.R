@@ -156,8 +156,8 @@ fit_propensity_models <- function(
 
 	# none of these weeks should receive any weight
 	weekly_records_data[(wk > tb_wk), prob_wt_num_tpt_tb := 0]
-	weekly_records_data[(wk <  tpt_start_wk & wk <= tb_wk & wk < grace_pd_wks), prob_wt_num_tpt_tb := 1 - num_model_prediction]
-	weekly_records_data[(wk == tpt_start_wk & wk <= tb_wk & wk < grace_pd_wks), prob_wt_num_tpt_tb := num_model_prediction]
+	weekly_records_data[(wk <  tpt_start_wk & wk <= tb_wk & wk <= grace_pd_wks), prob_wt_num_tpt_tb := 1 - num_model_prediction]
+	weekly_records_data[(wk == tpt_start_wk & wk <= tb_wk & wk <= grace_pd_wks), prob_wt_num_tpt_tb := num_model_prediction]
 
 
 	weekly_records_data[, prob_wt_num_tpt_death := 99999]
@@ -165,8 +165,8 @@ fit_propensity_models <- function(
 	weekly_records_data[(wk > tpt_start_wk), prob_wt_num_tpt_death := 1]
 
 	weekly_records_data[(wk > death_wk), prob_wt_num_tpt_death := 0]
-	weekly_records_data[(wk <  tpt_start_wk & wk <= death_wk & wk < grace_pd_wks), prob_wt_num_tpt_death := 1 - num_model_prediction]
-	weekly_records_data[(wk == tpt_start_wk & wk <= death_wk & wk < grace_pd_wks), prob_wt_num_tpt_death := num_model_prediction]
+	weekly_records_data[(wk <  tpt_start_wk & wk <= death_wk & wk <= grace_pd_wks), prob_wt_num_tpt_death := 1 - num_model_prediction]
+	weekly_records_data[(wk == tpt_start_wk & wk <= death_wk & wk <= grace_pd_wks), prob_wt_num_tpt_death := num_model_prediction]
 	# special care for tb cases in the grace period -- these are still "compatible" with
 	# our interventional TPT initiation distribution
 	weekly_records_data[(tb_wk <= grace_pd_wks & wk > tb_wk & wk <= death_wk), prob_wt_num_tpt_death := 1]
