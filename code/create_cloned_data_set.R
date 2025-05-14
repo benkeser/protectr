@@ -146,11 +146,11 @@ truncate_wts <- function(weekly_records_data, tb, tpt){
   # Summarizing the data table - for each ID, counting weeks, censoring, etc.
   if (tb == "yes") {
     wk_summary <- weekly_records_data[, .(wks = .N, 
-                                          cens_wk = min(first(tb_wk), first(death_wk), 103)),
+                                          cens_wk = min(first(tb_wk), first(death_wk), 104)),
                                       by = id]
   } else {
     wk_summary <- weekly_records_data[, .(wks = .N, 
-                                          cens_wk = min(first(death_wk), 103)),
+                                          cens_wk = min(first(death_wk), 104)),
                                       by = id]
   }
   
@@ -210,19 +210,19 @@ truncate_wts <- function(weekly_records_data, tb, tpt){
   # Calculate 99th percentile
   weekly_wts <- weekly_wts[, .(wt_trunc = quantile(get(names(weekly_wts)[3]), 0.99, na.rm = TRUE)), 
                            by = wk]
-  if(tpt == "yes"){
-    if(tb == "yes"){
-      weekly_wts[, wt_tpt_tb := NULL]
-    } else {
-      weekly_wts[, wt_tpt_death := NULL]
-    }
-  } else {
-    if(tb == "yes"){
-      weekly_wts[, wt_cntrl_tb := NULL]
-    } else {
-      weekly_wts[, wt_cntrl_death := NULL]
-    }
-  }
+  # if(tpt == "yes"){
+  #   if(tb == "yes"){
+  #     weekly_wts[, wt_tpt_tb := NULL]
+  #   } else {
+  #     weekly_wts[, wt_tpt_death := NULL]
+  #   }
+  # } else {
+  #   if(tb == "yes"){
+  #     weekly_wts[, wt_cntrl_tb := NULL]
+  #   } else {
+  #     weekly_wts[, wt_cntrl_death := NULL]
+  #   }
+  # }
   
   # Merge with original data
   weekly_records_data <- merge(weekly_records_data, weekly_wts, by = "wk", all.x = TRUE)

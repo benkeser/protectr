@@ -299,7 +299,7 @@ fit_propensity_models <- function(
 	weekly_records_data_wts <- rbindlist(wts_by_id)
 	
 	# remove temp tpt_outcome variable that was added for prediction
-	weekly_records_data[,tpt_outcome:=NULL]
+	# weekly_records_data[,tpt_outcome:=NULL]
 
 	weekly_records_data_wts <- merge(
 	  weekly_records_data, 
