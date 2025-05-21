@@ -4,9 +4,13 @@
 #'   created by \code{create_cloned_data_set} function
 check_wts <- function(cloned_data_sets){
 	tb_z1 <- add_zeroes(cloned_data_sets = cloned_data_sets, condition = "tb_z1")
+	tb_z1$z <- 1
 	tb_z0 <- add_zeroes(cloned_data_sets = cloned_data_sets, condition = "tb_z0")
+	tb_z0$z <- 0
 	death_z1 <- add_zeroes(cloned_data_sets = cloned_data_sets, condition = "death_z1")
+	death_z1$z <- 1
 	death_z0 <- add_zeroes(cloned_data_sets = cloned_data_sets, condition = "death_z0")
+	death_z0$z <- 0
 
 	tb_z1_mean <- tb_z1 %>% group_by(wk) %>% summarize(mean_wt_k = mean(wt_k, na.rm = TRUE))
 	tb_z0_mean <- tb_z0 %>% group_by(wk) %>% summarize(mean_wt_k = mean(wt_k, na.rm = TRUE))
@@ -15,16 +19,16 @@ check_wts <- function(cloned_data_sets){
 
 	out <- list()
 	out$weights <- list(
-		tb_z1 <- tb_z1,
-		tb_z0 <- tb_z0,
-		death_z1 <- death_z1,
-		death_z0 <- death_z0
+		tb_z1 = tb_z1,
+		tb_z0 = tb_z0,
+		death_z1 = death_z1,
+		death_z0 = death_z0
     )
 	out$weekly_means <- list(
-		tb_z1_mean <- tb_z1_mean,
-		tb_z0_mean <- tb_z0_mean,
-		death_z1_mean <- death_z1_mean,
-		death_z0_mean <- death_z0_mean
+		tb_z1_mean = tb_z1_mean,
+		tb_z0_mean = tb_z0_mean,
+		death_z1_mean = death_z1_mean,
+		death_z0_mean = death_z0_mean
     )
 
 	return(out)
@@ -54,9 +58,9 @@ add_zeroes <- function(cloned_data_sets, condition){
 
   # Create the summary data.table
   if (condition %in% c("tb_z1", "tb_z0")) {
-    data_summary <- data[, .(wks = .N, cens_wk = min(c(first(tb_wk), first(death_wk), 103))), by = id]
+    data_summary <- data[, .(wks = .N, cens_wk = min(c(first(tb_wk), first(death_wk), 104))), by = id]
   } else {
-    data_summary <- data[, .(wks = .N, cens_wk = min(c(first(death_wk), 103))), by = id]
+    data_summary <- data[, .(wks = .N, cens_wk = min(c(first(death_wk), 104))), by = id]
   }
   
   # Compute the number of weeks to add
