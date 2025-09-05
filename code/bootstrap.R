@@ -261,17 +261,29 @@ run_bootstrap <- function(
     return(bootstrap_results)
 }
 
-get_bootstrap_ci <- function(bootstrap_results) {
+get_bootstrap_ci <- function(bootstrap_results, mdr = "no") {
     # confidence intervals for cf_init_dist
     cf_init_dist_ci <- get_fn_by_wk_boot_result(
         bootstrap_results, "cf_init_dist"
     )
 
-    # bootstrap results for msm_fits_tb
-    msm_fits_tb_ci <- get_msm_boot_result(
+    if (mdr == "no"){
+      # bootstrap results for msm_fits_tb
+      msm_fits_tb_ci <- get_msm_boot_result(
         bootstrap_results, "msm_fits_tb"
-    )
-
+      )
+    } else if (mdr == "yes"){
+      # bootstrap results for msm_fits_tb_mdr
+      msm_fits_tb_mdr_ci <- get_msm_boot_result(
+        bootstrap_results, "msm_fits_tb_mdr"
+      )
+      
+      # bootstrap results for msm_fits_tb_not_mdr
+      msm_fits_tb_not_mdr_ci <- get_msm_boot_result(
+        bootstrap_results, "msm_fits_tb_not_mdr"
+      )
+    }
+    
     # bootstrap results for msm_fits_death
     msm_fits_death_ci <- get_msm_boot_result(
         bootstrap_results, "msm_fits_death"
@@ -289,13 +301,25 @@ get_bootstrap_ci <- function(bootstrap_results) {
         fn_by_wk_name = "cuminc"
     )
 
-    out <- list(
+    if (mdr == "no"){
+      out <- list(
         cf_init_dist_ci = cf_init_dist_ci,
         msm_fits_tb_ci = msm_fits_tb_ci,
         msm_fits_death_ci = msm_fits_death_ci,
         msm_fits_death_for_tb_ci = msm_fits_death_for_tb_ci,
         cuminc_ci = cuminc_ci
-    )
+      )
+    } else if (mdr == "yes"){
+      out <- list(
+        cf_init_dist_ci = cf_init_dist_ci,
+        msm_fits_tb_ci = NULL,
+        msm_fits_tb_mdr_ci = msm_fits_tb_mdr_ci,
+        msm_fits_tb_not_mdr_ci = msm_fits_tb_not_mdr_ci,
+        msm_fits_death_ci = msm_fits_death_ci,
+        msm_fits_death_for_tb_ci = msm_fits_death_for_tb_ci,
+        cuminc_ci = cuminc_ci
+      )
+    }
 
     return(out)
 }
